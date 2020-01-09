@@ -940,7 +940,7 @@ class Process(DynamicEntity):
         This triggers the simulation.
 
         :param
-        until: The maximum time for simulation run
+        until: The maximum time, modeled in the process flows, for simulation run
         """
 
 
@@ -1029,6 +1029,11 @@ class Process(DynamicEntity):
     # !start with an uppercase letter
     #
     def Action(self, name, duration=1):
+        """
+        :param name:
+        :param duration: The time modeled in the process flows
+        :return:
+        """
         obj = Action(name, duration)
         Contains(self, obj)
         return obj

@@ -95,7 +95,7 @@ r1 = Requirement("Req 1_1", des="The system shall fit into a size not exceeding 
 pro1.traced_from(r1)
 
 """
-4. Perform ExSim
+4. Perform ExSim = model center
                     +---------------+   
                     |               |
                     |    Com 1_1    |
