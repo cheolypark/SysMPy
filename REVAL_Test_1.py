@@ -1,9 +1,14 @@
 from entity import *
 import asyncio
-import sys
 
 """
-1. Define an action model 
+1. Define a simple system requirement 
+"""
+# Define requirements
+r1 = Requirement("Req 1_1", des="The system shall fit into a size not exceeding 4", range=[1, 2, 3, 4])
+
+"""
+2. Define an action model 
                 +---------------+
                 |               |
                 |     start     |
@@ -38,7 +43,7 @@ act2 = p.Action('action 1_2')
 
 
 """
-2. Define a physical model
+3. Define a physical model (i.e., Block Diagram)
                 +---------------+
                 |               |
                 |     Com1      |
@@ -67,13 +72,13 @@ c1_1.performs(act1)
 c1_2.performs(act2)
 
 # Make properties for components
-pro1 = c1.Property("Total size", range=[1, 2, 3], value=1)
-pro1_1 = c1_1.Property("Size", range=[1, 2, 3], value=1)
-pro1_2 = c1_2.Property("Size", range=[1, 2, 3], value=1)
+pro1 = c1.Property("Total size")
+pro1_1 = c1_1.Property("Size", range=[1, 2, 3])
+pro1_2 = c1_2.Property("Size", range=[1, 2, 3])
 
 
 """
-3. Define a link between components and requirements
+4. Define a link between components and requirements
                 +---------------+
                 |               |
                 |     Com1      |
@@ -88,14 +93,11 @@ pro1_2 = c1_2.Property("Size", range=[1, 2, 3], value=1)
                 |               |        
                 +---------------+       
 """
-# Define requirements
-r1 = Requirement("Req 1_1", des="The system shall fit into a size not exceeding 3", range=[1, 2, 3], value=1)
-
 # Make relationships between components and requirements
 pro1.traced_from(r1)
 
 """
-4. Perform ExSim = model center
+5. Perform ExSim (i.e., model center)
                     +---------------+   
                     |               |
                     |    Com 1_1    |
@@ -149,6 +151,6 @@ act_ex.func(exsim_function1)
 asyncio.run(p_ex.sim())
 
 """
-5. Check requirements for the physical simulation results
+6. Check requirements with the simulation results
 """
 r1.check_property()
