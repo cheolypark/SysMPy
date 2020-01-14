@@ -1,6 +1,4 @@
-from entity import *
-import asyncio
-import Requirements.req1
+import req1
 from entity import *
 
 """
@@ -52,5 +50,5 @@ r2 = Requirement(id="2",
                 )
 
 
-r1.req = Requirements.req1.r1
+r1.req = req1.r1
 print(r1)

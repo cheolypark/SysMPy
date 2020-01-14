@@ -1,9 +1,5 @@
 from entity import *
-import asyncio
 
-import sys
-
-import RD1_Simlpe_List_Test as rd1
 """
                 +---------------+
                 |               |

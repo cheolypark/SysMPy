@@ -3,7 +3,7 @@
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/Core" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/Requirements" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/Examples/RequirementModels/Requirements" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/Core/Meta" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />

@@ -1,4 +1,3 @@
-from entity import *
 import asyncio
 """
                             +---------------+        /   +---------------+
@@ -28,7 +27,7 @@ import asyncio
                             |               |
                             +---------------+ 
 """
-import AD9_SubActions_Test_2 as super
+from Examples.ActionModels import AD9_SubActions_Test_2 as super
 
 ###############################################
 # 1 Define actions
