@@ -45,6 +45,7 @@ act3 = p.Action("Action3")
 
 ###############################################
 # 2 run simulation
+# Entity._debug_mode = True
 asyncio.run(p.sim())
 
 actions = Process.get_by_type(Action)

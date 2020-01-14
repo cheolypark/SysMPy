@@ -256,6 +256,13 @@ class Requirement(Property):
             str = f'{self.name} Range is {self.range}: {l} {is_passed}'
             print(str)
 
+    def __str__(self):
+        """Overriding StaticEntity.__str__ so that it prints kwargs as well (useful for debugging).
+        :return: super().__str__ appended with self.kwargs
+        """
+        ret = super(Requirement, self).__str__()
+        ret += " " + str(self.kwargs)
+        return ret
 
 class Component(StaticEntity):
     def __init__(self, name, **kwargs):
@@ -438,6 +445,11 @@ class DynamicEntity(Entity):
                             e.flow(self.end)
 
                     entities.append(self.end)
+        elif isinstance(self, Process):   # This is likely to be an empty process (no 'contains' key)
+            # Just let this root process to flow directly to the end
+            self.flow(self.end)
+            # Make sure the list contains the end node
+            entities.append(self.end)
 
 
     def print_flows(self, entities):
@@ -787,6 +799,8 @@ class DynamicEntity(Entity):
                 # Check 10: One iteration of the root process was done
                 if isinstance(self, Process_END) and self.is_root:
                     Process.store_data(self, 'decomposes done as the root process', info='')
+                    Process.store_data(self, "deactivating root process now", info='')
+                    Process.activated = False
 
             else:
                 ########################################################################

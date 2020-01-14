@@ -43,4 +43,5 @@ act2.consumes(r1, amount=10)
 ###############################################
 # 2 run simulation
 asyncio.run(p.sim())
+print("Process: " + str(p))
 

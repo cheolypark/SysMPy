@@ -19,6 +19,8 @@ import asyncio
 # 1 Define actions
 p = Process("process1")
 
+Entity._debug_mode = True
+
 ###############################################
 # 2 run simulation
 asyncio.run(p.sim())
