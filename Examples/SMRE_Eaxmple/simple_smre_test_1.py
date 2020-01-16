@@ -60,16 +60,15 @@ act2 = p.Action('action 1_2')
                 +---------------+       +---------------+
 """
 # Define components
-c1 = Component("Com1", des="This is a component")
-c1_1 = Component("Com1_1", des="This is another component")
-c1_2 = Component("Com1_2", des="This is another component")
-c1.decomposes(c1_1)
-c1.decomposes(c1_2)
+c1 = Component("Com1", des="This is a system")
+c1_1 = c1.Component("Com1_1", des="This is another component")
+c1_2 = c1.Component("Com1_2", des="This is another component")
 
-# Make relationships between components and processes
+# Make relationships between components and processes/actions
 c1.performs(p)
 c1_1.performs(act1)
 c1_2.performs(act2)
+
 
 # Make properties for components
 pro1 = c1.Property("Total size")
@@ -153,4 +152,11 @@ asyncio.run(p_ex.sim())
 """
 6. Check requirements with the simulation results
 """
+
 r1.check_property()
+
+# we can check all properties with hierarchy of entities
+# p_ex.check_requirement()
+
+# impact of changes (revision)
+# p_ex.search_all(entity, obj)

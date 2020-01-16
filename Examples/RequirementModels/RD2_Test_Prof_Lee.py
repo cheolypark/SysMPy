@@ -49,6 +49,4 @@ r2 = Requirement(id="2",
                  who="SAI"
                 )
 
-
-r1.req = req1.r1
 print(r1)

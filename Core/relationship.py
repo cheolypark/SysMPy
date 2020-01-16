@@ -116,6 +116,7 @@ class Decomposes(Relationship):
 class Contains(Relationship):
     """
     'Contains' is used to represent for a subset of an entity.
+    'Contains' represents the relationship 'aggregation' 1 to n
     e.g.,) 'Process 1' contains 'Action 1' and 'Action 2'.
     """
     def __init__(self, start, end):

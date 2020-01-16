@@ -50,6 +50,12 @@ class Entity:
     def decomposes(self, target):
         """
         This makes a 'decomposes' or 'decomposes' relationship between this and a target
+        We define decomposition as composition as shown the following n-to-n relationship.
+        # composition n to n
+
+        We define the relationship 'contains' as aggregation.
+        # aggregation 1 to n
+
         :param target: an entity is decomposed by this
         """
         Decomposes(self, target)
@@ -256,6 +262,15 @@ class Requirement(Property):
             str = f'{self.name} Range is {self.range}: {l} {is_passed}'
             print(str)
 
+    ########################################################################
+    # Class Creation Methods
+    # !start with an uppercase letter
+    #
+    def Requirement(self, name, range=None, value=None, **kwargs):
+        obj = Requirement(name, range, value, **kwargs)
+        Contains(self, obj)
+        return obj
+
     def __str__(self):
         """Overriding StaticEntity.__str__ so that it prints kwargs as well (useful for debugging).
         :return: super().__str__ appended with self.kwargs
@@ -275,6 +290,15 @@ class Component(StaticEntity):
     #
     def performs(self, target):
         Performs(self, target)
+
+    ########################################################################
+    # Class Creation Methods
+    # !start with an uppercase letter
+    #
+    def Component(self, name, **kwargs):
+        obj = Component(name, **kwargs)
+        Contains(self, obj)
+        return obj
 
 
 ########################################################################
