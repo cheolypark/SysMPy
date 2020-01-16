@@ -33,7 +33,7 @@ i2 = Item("Item2")
 pro1_1 = i1.Property("input", range=[1, 2, 3], value=1)
 pro1_2 = i2.Property("output", range=[1, 2, 3], value=1)
 
-# External Simulation Script ######################################
+# External SMRE_Eaxmple Script ######################################
 def exsim_function(io):
     pro1_1, pro1_2 = io.get("Item1.input"), io.get("Item2.output")
     i1_value = pro1_1.get_random_value()

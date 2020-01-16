@@ -5,6 +5,8 @@
       <sourceFolder url="file://$MODULE_DIR$/Core" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/Examples/RequirementModels/Requirements" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/Core/Meta" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/Examples/SMRE_Eaxmple/agc/RMSimulator/Code/Lib" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/Examples/SMRE_Eaxmple/agc/AGCML/Code/Lib" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

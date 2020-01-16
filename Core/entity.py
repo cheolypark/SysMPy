@@ -378,12 +378,12 @@ class DynamicEntity(Entity):
         self.function = function
 
     ########################################################################
-    # Simulation Methods
+    # SMRE_Eaxmple Methods
     #
     #
     def get_flows(self, entities):
         """
-        This finds all flow nodes used in Simulation
+        This finds all flow nodes used in SMRE_Eaxmple
         The returning list acts will have flow nodes which are activated by Python Asyncio
 
         :param
@@ -899,11 +899,11 @@ class Process(DynamicEntity):
     Process Dynamic Entity
     """
 
-    # 'activated' is used to denote Simulation's activation. False means 'stop simulation'
+    # 'activated' is used to denote SMRE_Eaxmple's activation. False means 'stop simulation'
     activated = False
-    # 'global_time' is used to denote Simulation's global time
+    # 'global_time' is used to denote SMRE_Eaxmple's global time
     global_time = 0
-    # 'global_max' is used to denote when Simulation will stop
+    # 'global_max' is used to denote when SMRE_Eaxmple will stop
     global_max = 0
 
     def __init__(self, name):

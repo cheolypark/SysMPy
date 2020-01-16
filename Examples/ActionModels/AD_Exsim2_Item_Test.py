@@ -41,7 +41,7 @@ act1.sends(i2)
 act2.receives(i2)
 
 
-# External Simulation Script ######################################
+# External SMRE_Eaxmple Script ######################################
 def exsim_function1(io):
     out = io.get("Item2.input")
     out.value = random.random()
@@ -50,7 +50,7 @@ def exsim_function1(io):
 # Script end ##################################
 act1.func(exsim_function1)
 
-# External Simulation Script ######################################
+# External SMRE_Eaxmple Script ######################################
 def exsim_function2(io):
     input = io.get("Item2.input")
     print("exsim_function 2: " + str(input.value))
