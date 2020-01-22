@@ -687,7 +687,7 @@ class DynamicEntity(Entity):
                 ########################################################################
                 # Check 2: Check global time
                 Process.global_time = max(Process.global_time, self.time)
-                if Process.global_time >= Process.global_max:
+                if Process.global_max is not None and Process.global_time >= Process.global_max:
                     Process.activated = False
 
                 ########################################################################
@@ -823,8 +823,9 @@ class DynamicEntity(Entity):
                 # Check 10: One iteration of the root process was done
                 if isinstance(self, Process_END) and self.is_root:
                     Process.store_data(self, 'decomposes done as the root process', info='')
-                    Process.store_data(self, "deactivating root process now", info='')
-                    Process.activated = False
+                    if Process.global_max is None:
+                        Process.store_data(self, 'deactivating root process now', info='')
+                        Process.activated = False
 
             else:
                 ########################################################################
@@ -928,7 +929,7 @@ class Process(DynamicEntity):
     # 'global_time' is used to denote SMRE_Eaxmple's global time
     global_time = 0
     # 'global_max' is used to denote when SMRE_Eaxmple will stop
-    global_max = 0
+    global_max = None
 
     def __init__(self, name):
         super().__init__(name)
@@ -979,6 +980,7 @@ class Process(DynamicEntity):
 
         :param
         until: The maximum time, modeled in the process flows, for simulation run
+        If until is None, the simulation performs just one time.
         """
 
 

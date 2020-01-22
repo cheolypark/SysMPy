@@ -129,6 +129,7 @@ act_ex.receives(pro1_1)
 act_ex.receives(pro1_2)
 act_ex.sends(pro1)
 
+
 # External SMRE_Eaxmple Script ######################################
 def exsim_function1(io):
     i1, i2, out = io.get("Com1_1.Size"), io.get("Com1_2.Size"), io.get("Com1.Total size")
