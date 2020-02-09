@@ -41,6 +41,7 @@ i2 = Item("Item2")
 i3 = Item("Item3")
 i2.size(1)
 
+# define Conduit for the item 2
 con1 = Conduit("Conduit 1")
 con1.transfers(i2)
 con1.delay(7)

@@ -153,11 +153,5 @@ asyncio.run(p_ex.sim())
 """
 6. Check requirements with the simulation results
 """
+p_ex.evaluate_requirements()
 
-r1.check_property()
-
-# we can check all properties with hierarchy of entities
-# p_ex.check_requirement()
-
-# impact of changes (revision)
-# p_ex.search_all(entity, obj)

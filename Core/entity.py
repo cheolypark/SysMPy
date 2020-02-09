@@ -1,7 +1,7 @@
 import asyncio
 from relationship import *
 import random
-
+import queue
 
 class Entity:
     """ LIFECYCLE MODELING LANGUAGE (LML) SPECIFICATION 1.1:
@@ -71,6 +71,70 @@ class Entity:
         --
         """
         RequiredBy(self, target)
+
+    ########################################################################
+    # Get or Search Methods
+    #
+    #
+    def get_pairs(self):
+        if 'pairs' in self.relation:
+            pairs = [x.end for x in self.relation['pairs']]
+        return pairs
+
+    def get_pairs_inv(self):
+        if 'paired with' in self.inv_relation:
+            paired_with = [x.start for x in self.inv_relation['paired with']]
+        if len(paired_with) == 1:
+            return paired_with[0]
+        return paired_with
+
+    def search(self, inverse=False, class_search=[]):
+        """
+        This returns an entity list and a relation list for this entity using search words
+        :param inverse: 'True' means tracing inverse direction
+        :param class_search: search words
+        :return: The entity and relation list
+        """
+        breaker = []
+        entity_results = []
+        relation_results = []
+        self.search_op(breaker, '', inverse, class_search, entity_results, relation_results)
+
+        return entity_results, relation_results
+
+    def search_op(self, breaker, space, inverse, class_search, entity_results, relation_results):
+        if self in breaker:
+            return
+        breaker.append(self)
+        # print(space + f'{self.name}')
+        # space += '   '
+
+        # Include this entity class if it is in the search list
+        if self.__class__ in class_search:
+            entity_results.append(self)
+
+        if inverse is False:
+            for rel_name, rel_list in self.relation.items():
+                # print(space + f'rel: {rel_name}')
+
+                for rel_ins in rel_list:
+                    # Include this relation class if it is in the search list
+                    if rel_ins.__class__ in class_search:
+                        relation_results.append(rel_ins)
+
+                    # Perform recursion
+                    rel_ins.end.search_op(breaker, space, inverse, class_search, entity_results, relation_results)
+        elif inverse is True:
+            for rel_name, rel_list in self.inv_relation.items():
+                # print(space + f'rel: {rel_name}')
+
+                for rel_ins in rel_list:
+                    # Include this relation class if it is in the search list
+                    if rel_ins.__class__ in class_search:
+                        relation_results.append(rel_ins)
+
+                    # Perform recursion
+                    rel_ins.start.search_op(breaker, space, inverse, class_search, entity_results, relation_results)
 
     ########################################################################
     # Static Methods
@@ -202,6 +266,12 @@ class Item(StaticEntity):
         super().__init__(name)
         self.attr = {}
 
+        # Item size is used for conduit operation
+        self._size = 0
+
+    def size(self, s):
+        self._size = s
+
 
 class Conduit(StaticEntity):
     """
@@ -278,6 +348,7 @@ class Requirement(Property):
         ret = super(Requirement, self).__str__()
         ret += " " + str(self.kwargs)
         return ret
+
 
 class Component(StaticEntity):
     def __init__(self, name, **kwargs):
@@ -475,7 +546,6 @@ class DynamicEntity(Entity):
             # Make sure the list contains the end node
             entities.append(self.end)
 
-
     def print_flows(self, entities):
         """
         This prints out the control flows of UC
@@ -500,7 +570,7 @@ class DynamicEntity(Entity):
             Phase 2: Perform Action in which all defined activities are performed
         """
         while Process.activated:
-            # Info is used to store any information in this process and be printed out by 'Process.store_data()'
+            # Info is used to store any information in this process and be printed out by 'Process.store_event()'
             info = ''
 
             ##################################################################################
@@ -513,7 +583,7 @@ class DynamicEntity(Entity):
             # Check 1: Check waiting state
             # Any process can be waiting, if there is no event to this process
             if self.waiting is False:
-                Process.store_data(self, 'was waiting')
+                Process.store_event(self, 'waiting')
                 self.waiting = True
 
             # Reset all fire states
@@ -666,8 +736,8 @@ class DynamicEntity(Entity):
                     max_size = max([r.end._size for r in conduits[0]])
                     max_conduits_time = max_delay + max_size/max_capacity
 
-                    Process.store_data(self, 'triggered', info=f'After conduit flows, '
-                                                               f'a time {max_conduits_time} was added')
+                    Process.store_event(self, 'triggered', info=f'After conduit flows, '
+                                            f'a time {max_conduits_time} was added')
 
                     # Apply the conduit times to this process time
                     self.time += max_conduits_time
@@ -681,7 +751,7 @@ class DynamicEntity(Entity):
 
                 ########################################################################
                 # Check 1: Activate this action
-                Process.store_data(self, 'was activated', info=info)
+                Process.store_event(self, 'activated', info=info)
                 self.waiting = False
 
                 ########################################################################
@@ -700,7 +770,7 @@ class DynamicEntity(Entity):
                         s += ' Resources(' + ', '.join([r.end.name for r in seizes_true])+')'
                         s += ' Taking Amounts(' + ', '.join([str(r.amount) for r in seizes_true])+')'
                         s += ' Result Amounts(' + ', '.join([str(r.end.amount) for r in seizes_true])+')'
-                        Process.store_data(self, 'seizes resources', info=f'[{s}]')
+                        Process.store_event(self, 'seizes resources', info=f'[{s}]')
 
                 ########################################################################
                 # Check 4: Sends Item
@@ -727,7 +797,7 @@ class DynamicEntity(Entity):
 
                                 s = ''
                                 s += 'To : ' + ', '.join([r.end.name for r in triggered_for_item])
-                                Process.store_data(self, 'sends', info=f'[{s}]')
+                                Process.store_event(self, 'sends', info=f'[{s}]')
 
                 ########################################################################
                 # Check 5: Produces Resources
@@ -735,7 +805,7 @@ class DynamicEntity(Entity):
                     produces = [x for x in self.relation['produces'] if isinstance(x, Produces)]
                     for r in produces:
                         r.end.amount += r.amount
-                        Process.store_data(self, 'produces resources', info=f'[New resources({r.amount}) '
+                        Process.store_event(self, 'produces resources', info=f'[New resources({r.amount}) '
                                                                             f'Total resources({r.end.amount})]')
 
                 ########################################################################
@@ -747,7 +817,7 @@ class DynamicEntity(Entity):
                         s += ' Consumes resources(' + ', '.join([r.end.name for r in consumes_true]) + ')'
                         s += ' Taking Amounts(' + ', '.join([str(r.amount) for r in consumes_true]) + ')'
                         s += ' Result Amounts(' + ', '.join([str(r.end.amount) for r in consumes_true]) + ')'
-                        Process.store_data(self, 'consumes resources', info=f'[{s}]')
+                        Process.store_event(self, 'consumes resources', info=f'[{s}]')
 
                 ########################################################################
                 # Check 7: Input Control Flows
@@ -762,33 +832,33 @@ class DynamicEntity(Entity):
 
                     if isinstance(self, Or):
                         selected = random.choice(flows)
-                        Process.store_data(self, 'selects ' +selected.end.name)
+                        Process.store_event(self, 'selects ' + selected.end.name)
                         selected.sent = True
                     elif isinstance(self, Condition):
                         if self.function is not None:
                             # Perform a function script for selection
                             selected = self.function(Entity)
                             selected_flows = [r for r in flows if r.end is selected]
-                            Process.store_data(self, 'selects ' + ', '.join([r.end.name for r in selected_flows]))
+                            Process.store_event(self, 'selects ' + ', '.join([r.end.name for r in selected_flows]))
                             for r in selected_flows:
                                 r.sent = True
                         else:
                             # Perform uniformly random selection for the branches
                             selected = random.choice(flows)
-                            Process.store_data(self, 'selects ' + selected.end.name)
+                            Process.store_event(self, 'selects ' + selected.end.name)
                             selected.sent = True
                     elif isinstance(self, Loop_END):
                         exit_loop = [x for x in flows_true if isinstance(x.start, ExitLoop)]
 
                         if self.count >= self.times-1 or len(exit_loop) > 0:
-                            Process.store_data(self, 'finished repetition')
+                            Process.store_event(self, 'finished repetition')
                             self.reset()
                             loops = [x for x in self.relation['flows'] if not isinstance(x.end, Loop)]
                             for x in loops:
                                 x.sent = True
                         else:
                             self.count += 1
-                            Process.store_data(self, 'repeats '+ str(self.count))
+                            Process.store_event(self, 'repeats ' + str(self.count))
                             loops = [x for x in self.relation['flows'] if isinstance(x.end, Loop)]
                             for x in loops:
                                 x.sent = True
@@ -805,7 +875,7 @@ class DynamicEntity(Entity):
                 # Check 8: Complete this process
                 self.time += self.duration
                 self.total_time += self.duration
-                Process.store_data(self, 'was completed', info='')
+                Process.store_event(self, 'completed', info='')
 
                 ########################################################################
                 # Check 9: Resources Seizes
@@ -817,14 +887,23 @@ class DynamicEntity(Entity):
                         s += ' Resources(' + ', '.join([r.end.name for r in seizes_true]) + ')'
                         s += ' Taking Amounts(' + ', '.join([str(r.amount) for r in seizes_true]) + ')'
                         s += ' Result Amounts(' + ', '.join([str(r.end.amount) for r in seizes_true]) + ')'
-                        Process.store_data(self, 'releases resources', info=f'[{s}]')
+                        Process.store_event(self, 'releases resources', info=f'[{s}]')
 
                 ########################################################################
                 # Check 10: One iteration of the root process was done
                 if isinstance(self, Process_END) and self.is_root:
-                    Process.store_data(self, 'decomposes done as the root process', info='')
+                    # Process.store_event(self, 'decomposes done as the root process', info='')
+                    Process.store_event(self, f'simulation {Process.simulation_count}', info='')
+
+                    # Global simulation count increases
+                    Process.simulation_count += 1
+
+                    # Save proper simulation results
+                    proc = self.get_pairs_inv()
+                    proc.save_simulation_results()
+
                     if Process.global_max is None:
-                        Process.store_data(self, 'deactivating root process now', info='')
+                        Process.store_event(self, 'deactivating root process now', info='')
                         Process.activated = False
 
             else:
@@ -924,12 +1003,16 @@ class Process(DynamicEntity):
     Process Dynamic Entity
     """
 
-    # 'activated' is used to denote SMRE_Eaxmple's activation. False means 'stop simulation'
+    # 'activated' is used to denote SMRE_Example's activation. False means 'stop simulation'
     activated = False
-    # 'global_time' is used to denote SMRE_Eaxmple's global time
+    # 'global_time' is used to denote SMRE_Example's global time
     global_time = 0
-    # 'global_max' is used to denote when SMRE_Eaxmple will stop
+    # 'global_max' is used to denote when SMRE_Example will stop
     global_max = None
+    # Simulation count is used to count each simulation run
+    simulation_count = 0
+    # simulation results are stored in queue
+    event_queue = queue.Queue()
 
     def __init__(self, name):
         super().__init__(name)
@@ -943,15 +1026,44 @@ class Process(DynamicEntity):
         # AsyncIO workers are used to be performed as computing threads
         self.workers = []
 
+        # sim_network is a network containing all processes, actions, and items associated with simulation
+        self.sim_network = []
+
+    ########################################################################
+    # Analysis Methods
+    #
+    #
+    def evaluate_interfaces(self):
+        """
+        This checks interfaces between functions (or actions)
+        """
+        from interfaceanalyzer import InterfaceAnalyzer
+
+        return InterfaceAnalyzer().run(self)
+
+    def evaluate_requirements(self):
+        """
+        This checks all requirements and evaluates them using simulation results
+        """
+
+        entity_results, relation_results = self.search(class_search=[Requirement])
+        for e in entity_results:
+            print(e)
+            e.check_property()
+
+    ########################################################################
+    # staticmethod
+    #
+    #
     @staticmethod
-    def store_data(act, event, info=''):
+    def store_event(act, event, info=''):
         if Entity._debug_mode:
             if len(info) == 0:
                 print(f'T: {act.time}, N: {act.name}, E: {event}')
             else:
                 print(f'T: {act.time}, N: {act.name}, E: {event}, I: {info}')
         else:
-
+            # Ignore unnecessary entities
             if isinstance(act, And) or \
                isinstance(act, And_END) or \
                isinstance(act, Loop) or \
@@ -965,14 +1077,37 @@ class Process(DynamicEntity):
                isinstance(act, Or_END):
                 return
 
+            # If process-end
             if isinstance(act, Process_END):
-                if event != 'was waiting' and \
-                   event != 'was activated' and \
-                   event != 'was completed' :
+                if event != 'waiting' and \
+                   event != 'activated' and \
+                   event != 'completed' :
                     print(f'At Time {act.time}, {act.name} {event}.')
+                    evt = {'class': act.__class__.__name__, 'name': act.name, 'time': act.time, 'event': event}
+                    Process.event_queue.put(evt)
             else:
-                if event != 'was waiting':
+                if Entity._debug_mode:
+                    if event != 'waiting':
+                        print(f'At Time {act.time}, {act.name} {event}.')
+                        evt = {'class':act.__class__.__name__, 'name': act.name, 'time': act.time, 'event': event}
+                        Process.event_queue.put(evt)
+                else:
                     print(f'At Time {act.time}, {act.name} {event}.')
+                    evt = {'class': act.__class__.__name__, 'name': act.name, 'time': act.time, 'event': event}
+                    Process.event_queue.put(evt)
+
+    @staticmethod
+    def get_event():
+        if Process.event_queue.empty():
+            return None
+        return Process.event_queue.get_nowait()
+
+    def save_simulation_results(self):
+        # self.print_flows(self.sim_network)
+
+        # 네트워크 서치로 프로퍼티와 관련 요구사항 리스트를 추출하는 것이 필요!!!
+        # print(self)
+        pass
 
     async def sim(self, until=5):
         """
@@ -982,7 +1117,6 @@ class Process(DynamicEntity):
         until: The maximum time, modeled in the process flows, for simulation run
         If until is None, the simulation performs just one time.
         """
-
 
         # The function sim is called, which means this is a root process
         self.is_root = True
@@ -1002,15 +1136,15 @@ class Process(DynamicEntity):
             Process.global_time = 0
             Process.activated = True
             Process.global_max = until
-            d_entities = []
+            self.sim_network = []
 
             # get flows from the relation 'flow' or 'contains'
-            self.get_flows(d_entities)
+            self.get_flows(self.sim_network)
 
             # print out control flows of UC
-            # self.print_flows(d_entities)
+            # self.print_flows(sim_network)
 
-            workers = [x.run() for x in d_entities]
+            workers = [x.run() for x in self.sim_network]
             workers.append(self.run())
             # await asyncio.gather(*self.workers)
             try:

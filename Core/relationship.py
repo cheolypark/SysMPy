@@ -30,7 +30,7 @@ class Relationship:
             rel.append(self)
 
     def __str__(self):
-        s = '{}_{}_{}'.format(self.start.name, self.re_name, self.end.name)
+        s = '[{}] {} [{}]'.format(self.start.name, self.re_name, self.end.name)
         return s
 
 

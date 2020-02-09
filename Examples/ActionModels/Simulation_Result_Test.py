@@ -38,3 +38,11 @@ p_act2 = p2.Action("Action2")
 # 2 run simulation
 asyncio.run(p.sim())
 
+###############################################
+# 3 get all simulation events
+while True:
+    q = p.get_event()
+    if q is None:
+        break
+    else:
+        print(q)
