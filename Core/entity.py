@@ -26,6 +26,9 @@ class Entity:
     def __str__(self):
         return "{} decomposes {}".format(self.name, self.relation)
 
+    def __repr__(self):
+        return self.name
+
     def set_decomposition(self, dec):
         """
         This sets the decomposition state when simulating
@@ -74,7 +77,7 @@ class Entity:
 
     ########################################################################
     # Get or Search Methods
-    #
+    # The following methods is for a local entity
     #
     def get_pairs(self):
         if 'pairs' in self.relation:
@@ -138,7 +141,8 @@ class Entity:
 
     ########################################################################
     # Static Methods
-    #
+    # Get or Search Methods
+    # The following methods is for a global entity
     #
     @staticmethod
     def debug_mode(self, b):
@@ -201,8 +205,6 @@ class Entity:
         e = [x for x in Entity.entity_db if isinstance(x, type_entity)]
         if e is None:
             return None
-        elif len(e) == 1:
-            return e[0]
         else:
             return e
 
@@ -1037,9 +1039,15 @@ class Process(DynamicEntity):
         """
         This checks interfaces between functions (or actions)
         """
-        from interfaceanalyzer import InterfaceAnalyzer
+        from interfaceanalyzer import InterfaceAnalyzer as IA
+        ia = IA(self)
+        return ia.get_critical_elements(self), \
+               ia.get_sphere_of_influence(self), \
+               ia.get_feedback_elements(self), \
+               ia.get_recursive_elements(self), \
+               ia.get_absence_items(self), \
+               ia.get_unused_items(self)
 
-        return InterfaceAnalyzer().run(self)
 
     def evaluate_requirements(self):
         """
