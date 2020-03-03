@@ -3,7 +3,30 @@ from relationship import *
 import random
 import queue
 
-class Entity:
+
+class GraphicEntity:
+    def __init__(self):
+        """
+        """
+        # Graphic variables
+        self.boundary_width = 0
+        self.boundary_height = 0
+        self.boundary_x = 0
+        self.boundary_y = 0
+        self.margin_y = 10
+        self.margin_x = 40
+        self.node_width = 80
+        self.node_height = 30
+        self.width_half = (self.node_width + self.margin_x*2)/2
+        self.height_half = (self.node_height + self.margin_y*2)/2
+        self.width = self.node_width + self.margin_x*2
+        self.height = self.node_height + self.margin_y*2
+        self.center_x = 0
+        self.center_y = 0
+        self.root_x = 0
+
+
+class Entity(GraphicEntity):
     """ LIFECYCLE MODELING LANGUAGE (LML) SPECIFICATION 1.1:
     An entity is something can exist by itself and is uniquely identifiable.
     """
@@ -13,6 +36,8 @@ class Entity:
     _debug_mode = False
 
     def __init__(self, name, number=None, description=None):
+        super().__init__()
+
         self.name = name
         self.number = number
         self.description = description
@@ -208,6 +233,14 @@ class Entity:
         else:
             return e
 
+
+
+    ########################################################################
+    # Graphic Methods
+    #
+    def get_mxgraph(self):
+        from gui_manager_mxgraph import GuiManagerMXgraph
+        return GuiManagerMXgraph().get_mxgraph(self)
 
 ########################################################################
 # Static Entity
@@ -999,6 +1032,100 @@ class Or_END(DynamicEntity):
     def __init__(self, name):
         super().__init__(name)
 
+# new test ======================================================
+class Loop(DynamicEntity):
+    """
+    Loop Dynamic Entity
+    """
+
+    def __init__(self, name='loop', times=2):
+        super().__init__(name)
+
+        # This decomposes a pair dynamic entity called 'end' or name+'_END'
+        self.end = Loop_END(name + '_END', times=times)
+
+        # Link this and the end using the relation 'Pairs'
+        Pairs(self, self.end)
+
+        # 'loop' is linked to 'loop_END' using the relation 'flow'
+        # 'loop_END' -> 'loop'
+        self.end.flow(self)
+
+    ########################################################################
+    # Class Creation Methods
+    # !start with an uppercase letter
+    #
+    def Process(self, name):
+        obj = Process(name)
+        Contains(self, obj)
+        return obj
+
+
+class Loop_END(DynamicEntity):
+    def __init__(self, name, times):
+        super().__init__(name)
+
+        # 'loop_END' is set with the looping times
+        self.times = times
+        self.count = 0
+
+    def reset(self):
+        super().reset()
+        self.count = 0
+
+
+class Condition(DynamicEntity):
+    """
+    Condition Dynamic Entity
+    """
+
+    def __init__(self, name):
+        super().__init__(name)
+
+        # This decomposes a pair dynamic entity called 'end' or name+'_END'
+        self.end = Condition_END(name + '_END')
+
+        # Link this and the end using the relation 'Pairs'
+        Pairs(self, self.end)
+
+    ########################################################################
+    # Class Creation Methods
+    # !start with an uppercase letter
+    #
+    def Process(self, name):
+        obj = Process(name)
+        Contains(self, obj)
+        return obj
+
+
+class Condition_END(DynamicEntity):
+    def __init__(self, name):
+        super().__init__(name)
+
+    def reset(self):
+        super().reset()
+
+
+class END(DynamicEntity):
+    """
+    END Dynamic Entity
+    """
+
+    def __init__(self, name):
+        super().__init__(name)
+
+    def reset(self):
+        super().reset()
+
+
+class ExitLoop(DynamicEntity):
+    def __init__(self, name):
+        super().__init__(name)
+
+    def reset(self):
+        super().reset()
+
+
 
 class Process(DynamicEntity):
     """
@@ -1269,87 +1396,87 @@ class Process_END(DynamicEntity):
     def __init__(self, name):
         super().__init__(name)
 
-
-class Loop(Process):
-    """
-    Loop Dynamic Entity
-    """
-
-    def __init__(self, name='loop', times=2):
-        super().__init__(name)
-
-        # This decomposes a pair dynamic entity called 'end' or name+'_END'
-        self.end = Loop_END(name + '_END', times=times)
-
-        # Link this and the end using the relation 'Pairs'
-        Pairs(self, self.end)
-
-        # 'loop' is linked to 'loop_END' using the relation 'flow'
-        # 'loop_END' -> 'loop'
-        self.end.flow(self)
-
-    ########################################################################
-    # Class Creation Methods
-    # !start with an uppercase letter
-    #
-    def Process(self, name):
-        obj = Process(name)
-        Contains(self, obj)
-        return obj
-
-
-class Loop_END(Process):
-    def __init__(self, name, times):
-        super().__init__(name)
-
-        # 'loop_END' is set with the looping times
-        self.times = times
-        self.count = 0
-
-    def reset(self):
-        super().reset()
-        self.count = 0
-
-
-class Condition(Process):
-    """
-    Condition Dynamic Entity
-    """
-
-    def __init__(self, name):
-        super().__init__(name)
-
-        # This decomposes a pair dynamic entity called 'end' or name+'_END'
-        self.end = Condition_END(name + '_END')
-
-        # Link this and the end using the relation 'Pairs'
-        Pairs(self, self.end)
-
-
-class Condition_END(Process):
-    def __init__(self, name):
-        super().__init__(name)
-
-    def reset(self):
-        super().reset()
-
-
-class END(Process):
-    """
-    END Dynamic Entity
-    """
-
-    def __init__(self, name):
-        super().__init__(name)
-
-    def reset(self):
-        super().reset()
-
-
-class ExitLoop(Process):
-    def __init__(self, name):
-        super().__init__(name)
-
-    def reset(self):
-        super().reset()
-
+#
+# class Loop(Process):
+#     """
+#     Loop Dynamic Entity
+#     """
+#
+#     def __init__(self, name='loop', times=2):
+#         super().__init__(name)
+#
+#         # This decomposes a pair dynamic entity called 'end' or name+'_END'
+#         self.end = Loop_END(name + '_END', times=times)
+#
+#         # Link this and the end using the relation 'Pairs'
+#         # Pairs(self, self.end)
+#
+#         # 'loop' is linked to 'loop_END' using the relation 'flow'
+#         # 'loop_END' -> 'loop'
+#         self.end.flow(self)
+#
+#     ########################################################################
+#     # Class Creation Methods
+#     # !start with an uppercase letter
+#     #
+#     def Process(self, name):
+#         obj = Process(name)
+#         Contains(self, obj)
+#         return obj
+#
+#
+# class Loop_END(Process):
+#     def __init__(self, name, times):
+#         super().__init__(name)
+#
+#         # 'loop_END' is set with the looping times
+#         self.times = times
+#         self.count = 0
+#
+#     def reset(self):
+#         super().reset()
+#         self.count = 0
+#
+#
+# class Condition(Process):
+#     """
+#     Condition Dynamic Entity
+#     """
+#
+#     def __init__(self, name):
+#         super().__init__(name)
+#
+#         # This decomposes a pair dynamic entity called 'end' or name+'_END'
+#         self.end = Condition_END(name + '_END')
+#
+#         # Link this and the end using the relation 'Pairs'
+#         # Pairs(self, self.end)
+#
+#
+# class Condition_END(Process):
+#     def __init__(self, name):
+#         super().__init__(name)
+#
+#     def reset(self):
+#         super().reset()
+#
+#
+# class END(Process):
+#     """
+#     END Dynamic Entity
+#     """
+#
+#     def __init__(self, name):
+#         super().__init__(name)
+#
+#     def reset(self):
+#         super().reset()
+#
+#
+# class ExitLoop(Process):
+#     def __init__(self, name):
+#         super().__init__(name)
+#
+#     def reset(self):
+#         super().reset()
+#

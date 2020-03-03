@@ -8,7 +8,7 @@ import asyncio
                                       |     start     |
                                       |               |
                                       +---------------+
-                                              | p0
+                                              | process
                         +--------------------(&)--------------------+
                         | process 1                                 | process 2
                 +---------------+                           +---------------+
@@ -27,7 +27,7 @@ import asyncio
 """
 ###############################################
 # 1 Define actions
-p = Process("p0")
+p = Process("process")
 
 p_and = p.And()
 

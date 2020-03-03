@@ -7,7 +7,7 @@ import asyncio
                             |     start     |
                             |               |
                             +---------------+
-                                    | p0
+                                    | process
                         +---------(OR)----------+
                         | p1                    | p2
                 +---------------+       +---------------+
@@ -26,7 +26,7 @@ import asyncio
 """
 ###############################################
 # 1 Define actions
-p = Process("p0")
+p = Process("process")
 p_or = p.Or()
 p1 = p_or.Process("p1")
 p2 = p_or.Process("p2")

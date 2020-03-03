@@ -11,7 +11,7 @@ import asyncio
                                     |
                             +---------------+
                             |               |
-                            |   Condition1  |
+                            |  Condition 1  |
                             |               |
                             +---------------+
                                 |       |                                    
@@ -20,7 +20,7 @@ import asyncio
                         |                       |           
                 +---------------+       +---------------+   
                 |               |       |               |   
-                |    Action1    |       |    Action2    |   
+                |    Action 1   |       |    Action 2   |   
                 |               |       |               |   
                 +---------------+       +---------------+   
                         |                       |           
@@ -29,7 +29,7 @@ import asyncio
                                     |
                             +---------------+
                             |               |
-                            |    Action3    |
+                            |    Action 3   |
                             |               |
                             +---------------+
                                     |
@@ -48,8 +48,9 @@ p_con = p.Condition("Condition 1")
 p1 = p_con.Process("process 1")
 p2 = p_con.Process("process 2")
 p_act1 = p1.Action("Action 1")
-p_end = p1.End()
 p_act2 = p2.Action("Action 2")
+p_end = p1.End()
+p_act3 = p.Action("Action 3")
 
 
 ###############################################

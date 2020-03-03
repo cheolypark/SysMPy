@@ -1,14 +1,6 @@
 from entity import *
 import asyncio
 
-
-
-
-
-
-
-
-
 """ 
                 +---------------+
                 |               |

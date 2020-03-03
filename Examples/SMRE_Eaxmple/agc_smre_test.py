@@ -37,9 +37,9 @@ r1 = Requirement("Req 1_1", des="The system shall fit into a size not exceeding 
                 +---------------+
 """
 # Define processes and actions
-p = Process("process 1")
-act1 = p.Action('action 1_1')
-act2 = p.Action('action 1_2')
+p = Process('main process')
+act1 = p.Action('action A')
+act2 = p.Action('action B')
 
 
 """

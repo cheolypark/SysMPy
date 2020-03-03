@@ -12,7 +12,7 @@ import asyncio
                                     |                           |
                             +---------------+                   |
                             |               |                   |
-                            |   Condition1  |                   |
+                            |  Condition 1  |                   |
                             |               |                   |
                             +---------------+                   |
                                 |       |                       |
@@ -21,7 +21,7 @@ import asyncio
                         |                       |               |
                 +---------------+       +---------------+       |
                 |               |       |               |       |
-                |    Action1    |       |    Action2    |       |
+                |    Action 1   |       |    Action 2   |       |
                 |               |       |               |       |
                 +---------------+       +---------------+       |
                         |                       |               |
@@ -32,7 +32,7 @@ import asyncio
                                     |
                             +---------------+
                             |               |
-                            |    Action3    |
+                            |    Action 3   |
                             |               |
                             +---------------+
                                     |
@@ -50,17 +50,17 @@ p = Process("process")
 
 loop = p.Loop()
 p_loop = loop.Process("process_loop")
-p_con = p_loop.Condition("Condition1")
+p_con = p_loop.Condition("Condition 1")
 
 p1 = p_con.Process("process 1")
-p_act1 = p1.Action("Action1")
+p_act1 = p1.Action("Action 1")
 
 p2 = p_con.Process("process 2")
-p_act2 = p2.Action("Action2")
+p_act2 = p2.Action("Action 2")
 
 p_exit = p1.ExitLoop()
 
-p.Action("Action3")
+p.Action("Action 3")
 
 ###############################################
 # 2 run simulation

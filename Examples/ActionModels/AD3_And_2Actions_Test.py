@@ -7,10 +7,10 @@ import asyncio
                             |     start     |
                             |               |
                             +---------------+
-                                    | p0
+                                    | process
                         +----------(&)----------+
                         | p1                    | p2
-         (i)    +---------------+       +---------------+
+                +---------------+       +---------------+
                 |               |       |               |
                 |    Action1    |       |    Action2    |
                 |               |       |               |
@@ -26,7 +26,7 @@ import asyncio
 """
 ###############################################
 # 1 Define actions
-p = Process("p0")
+p = Process("process")
 p_and = p.And()
 p1 = p_and.Process("p1")
 p2 = p_and.Process("p2")
