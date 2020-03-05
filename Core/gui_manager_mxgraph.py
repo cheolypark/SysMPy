@@ -9,69 +9,171 @@ class GuiManagerMXgraph:
         # mxGraph variables
         self.mx_nodes = []
 
-
     ########################################################################
     # Graphic Methods
     #
+    def init_graphic_variables(self, entity):
+        entity.boundary_width = 0
+        entity.boundary_height = 0
+        entity.boundary_x = 0
+        entity.boundary_y = 0
+        entity.margin_y = 6
+        entity.margin_x = 40
+        entity.node_width = 80
+        entity.node_height = 30
+        entity.width_half = (entity.node_width + entity.margin_x * 2) / 2
+        entity.height_half = (entity.node_height + entity.margin_y * 2) / 2
+        entity.width = entity.node_width + entity.margin_x * 2
+        entity.height = entity.node_height + entity.margin_y * 2
+        entity.center_x = 0
+        entity.center_y = 0
+        entity.root_x = 0
+
     def safe_name(self, name):
         return name.replace(" ", "_")
 
-    def make_node(self, name, x, y):
+    def make_node(self, en, name, x, y):
         # var v1 = graph.insertVertex(parent, null, 'Hello,', 20, 20, 80, 30) \\n
+        node_width = en.node_width
+        node_height = en.node_height
+        label = name
+
+        if isinstance(en, Action):
+            node_width = en.node_width
+            node_height = en.node_height
+        elif isinstance(en, And) or isinstance(en, And_END)or \
+                isinstance(en, Condition) or isinstance(en, Condition_END) or \
+                isinstance(en, Loop) or isinstance(en, Loop_END) or \
+                isinstance(en, Or) or isinstance(en, Or_END):
+            node_width = en.node_height
+            node_height = en.node_height
+        elif isinstance(en, Process) or isinstance(en, Process_END):
+            if en.is_root is True:
+                node_width = en.node_height
+                node_height = en.node_height
+            else:
+                node_width = 0
+                node_height = 0
+        elif isinstance(en, Item):
+            node_width = en.node_width - 18
+            node_height = en.node_height - 10
+
+        if isinstance(en, Process):
+            label = ''
+        if isinstance(en, Process_END):
+            label = ''
+        elif isinstance(en, And) or isinstance(en, And_END):
+            label = 'A'
+        elif isinstance(en, Condition) or isinstance(en, Condition_END):
+            label = 'C'
+        elif isinstance(en, Or) or isinstance(en, Or_END):
+            label = 'OR'
+        elif isinstance(en, Loop) or isinstance(en, Loop_END):
+            label = 'L'
+
+        # compensate the node position after resizing
+        x += (en.node_width-node_width)/2
+        y += (en.node_height - node_height) / 2
+
         node = ''
         s_name = self.safe_name(name)
         if s_name not in self.mx_nodes:
             self.mx_nodes.append(s_name)
-            node = f"var {s_name} = graph.insertVertex(parent, null, '{name}', {x}, {y}, 80, 30) /n "
+            # node = f"var {s_name} = graph.insertVertex(parent, null, '{name}', {x}, {y}, {node_width}, {node_height}, '{type(en).__name__}') /n "
+            node = f"var {s_name} = graph.insertVertex(parent, '{name}', '{label}', {x}, {y}, {node_width}, {node_height}, '{type(en).__name__}') /n "
+            node += f"{s_name}.geometry.alternateBounds = new mxRectangle(0, 0, 60, 30) /n "
+        #     v2.geometry.alternateBounds = new mxRectangle(0, 0, 80, 30);
         # print(node)
+
         return node
 
     def make_edge(self, s, e, point=None):
         # var e1 = graph.insertEdge(parent, null, '', v1, v2)\\n
-        s = self.safe_name(s)
-        e = self.safe_name(e)
+        s_name = self.safe_name(s.name)
+        e_name = self.safe_name(e.name)
         # edge = f"var {s}_{e} = graph.insertEdge(parent, null, '', {s}, {e}, 'verticalAlign=top') /n "
-        edge = f"var {s}_{e} = graph.insertEdge(parent, null, '', {s}, {e}) /n "
         # edge += f'{s}_{e}.geometry.points = [new mxPoint({s}.geometry.x + 10, 10)]/n'
 
+        if s.is_root is True or e.is_root is True:
+            edge = f"var {s_name}_{e_name} = graph.insertEdge(parent, null, '', {s_name}, {e_name}, 'Arrow_Edge_Process' ) /n "
+        elif isinstance(s, Item):
+            edge = f"var {s_name}_{e_name} = graph.insertEdge(parent, null, '', {s_name}, {e_name}, 'Arrow_Edge_Item' ) /n "
+        elif isinstance(e, Item):
+            edge = f"var {s_name}_{e_name} = graph.insertEdge(parent, null, '', {s_name}, {e_name}, 'Edge_Item' ) /n "
+        elif isinstance(s, Loop_END) and isinstance(e, Loop):
+            edge = f"var {s_name}_{e_name} = graph.insertEdge(parent, null, '', {s_name}, {e_name}, 'Arrow_Edge_Loop' ) /n "
+        else:
+            edge = f"var {s_name}_{e_name} = graph.insertEdge(parent, null, '', {s_name}, {e_name} ) /n "
+
         if point is not None:
-            edge += f'{s}_{e}.geometry.points = [new mxPoint( {point}, 0 )]/n'
+            edge += f'{s_name}_{e_name}.geometry.points = [new mxPoint( {point}, 0 )]/n'
         # e = graph.insertEdge(lane2a, null, 'No', step444, end3, 'verticalAlign=top');
         # e.geometry.points = [new mxPoint(step444.geometry.x + step444.geometry.width / 2,
         #                                  end3.geometry.y + end3.geometry.height / 2)];
 
+        # 'shape=link;labelBackgroundColor=#FFFFFF;'
+
         # print(edge)
         return edge
 
-    def get_mxgraph_string(self, entity, entities):
+    def get_mxgraph_string(self, entity, entities, list_actions):
         str = ''
         flows = [r for r in entity.relation['flows'] if isinstance(r, Flow)]
         for i, f in enumerate(flows):
-            str += self.make_node(f.start.name, f.start.center_x, f.start.center_y)
-            str += self.make_node(f.end.name, f.end.center_x, f.end.center_y)
-            str += self.make_edge(f.start.name, f.end.name)
+            str += self.make_node(f.start, f.start.name, f.start.center_x, f.start.center_y)
+            str += self.make_node(f.end, f.end.name, f.end.center_x, f.end.center_y)
+            str += self.make_edge(f.start, f.end)
 
         for e in entities:
             if 'flows' in e.relation:
                 flows = [r for r in e.relation['flows'] if isinstance(r, Flow)]
                 for i, f in enumerate(flows):
-                    str += self.make_node(f.start.name, f.start.center_x, f.start.center_y)
-                    str += self.make_node(f.end.name, f.end.center_x, f.end.center_y)
+                    str += self.make_node(f.start, f.start.name, f.start.center_x, f.start.center_y)
+                    str += self.make_node(f.end, f.end.name, f.end.center_x, f.end.center_y)
                     if isinstance(f.start, Loop_END) and isinstance(f.end, Loop):
-                        str += self.make_edge(f.start.name, f.end.name, f.start.center_x+f.start.node_width+20)
-                        # str += self.make_edge(f.start.name, f.end.name, 150)
+                        str += self.make_edge(f.start, f.end, point=f.start.center_x+f.start.node_width+20)
                     else:
-                        str += self.make_edge(f.start.name, f.end.name)
+                        str += self.make_edge(f.start, f.end)
+
+        # For items
+        for action in list_actions:
+            receiving_items = [r.end for r in action.relation['receives'] if isinstance(r, Receives)]
+            y_pos = 0
+            for item in receiving_items:
+                self.init_graphic_variables(item)
+
+                if 'sent from' in item.inv_relation:
+                    sender = item.inv_relation['sent from'][0].start
+                    direction = action.center_x - sender.center_x
+                    if direction > 10:
+                        item.center_x = action.center_x - action.boundary_width/2
+                    elif direction < -10:
+                        item.center_x = action.center_x + action.boundary_width/2
+                    else:
+                        item.center_x = action.center_x - action.boundary_width/2
+
+                    item.center_y = action.center_y
+
+                    str += self.make_node(item, item.name, item.center_x, item.center_y + y_pos)
+                    str += self.make_edge(sender, item)
+                    str += self.make_edge(item, action)
+
+                    y_pos -= item.height_half
 
         return str
 
     def get_mxgraph(self, entity):
 
+        # Set this with a root process flag
+        entity.is_root = True
+        entity.end.is_root = True
+
         # 1. Find size and root_x of nodes
         self.find_size_and_root_x(entity)
 
-        # 2. Find center_x and center_y
-        self.find_center(entity, None, 0, 0)
+        # 2. Find center_x and center_y for dynamic entity (e.g., Process, Action, and Condition)
+        list_actions = [] # This is used for item positioning
+        self.find_center(entity, None, 0, 0, list_actions)
 
         self.mx_nodes = []
         sim_network = []
@@ -80,11 +182,16 @@ class GuiManagerMXgraph:
         entity.get_flows(sim_network)
 
         # print out control flows of UC
-        return self.get_mxgraph_string(entity, sim_network)
+        return self.get_mxgraph_string(entity, sim_network, list_actions)
+
 
     def find_size_and_root_x(self, entity):
-        # print(f'{entity.name}')
+        # Init Graphic variables
+        self.init_graphic_variables(entity)
+        if hasattr(entity, 'end'):
+            self.init_graphic_variables(entity.end)
 
+        # Set Graphic variables
         largest_child_width = entity.width # The default size is its size
         largest_child_height = entity.height
         largest_root_x = entity.width_half
@@ -126,11 +233,13 @@ class GuiManagerMXgraph:
 
         # print(f'{entity.name} boundary_width[{entity.boundary_width}] boundary_height[{entity.boundary_height}] root_x[{entity.root_x}]')
 
-    def find_center(self, entity, parent, pre_edge_x, pre_edge_y):
+    def find_center(self, entity, parent, pre_edge_x, pre_edge_y, list_actions):
         # print(f'{entity.name}')
 
         # find center_x and center_y
         if isinstance(entity, Action):
+            if 'receives' in entity.relation:
+                list_actions.append(entity) # list_actions is used for item positioning later
             entity.center_x = parent.center_x
             entity.center_y = pre_edge_y + entity.height_half
         elif isinstance(entity, And) or isinstance(entity, Condition) or isinstance(entity, Or):
@@ -159,7 +268,7 @@ class GuiManagerMXgraph:
             for i, c in enumerate(children):
                 child = c.end
 
-                child_x, child_y = self.find_center(child, entity, pre_edge_x, pre_edge_y)
+                child_x, child_y = self.find_center(child, entity, pre_edge_x, pre_edge_y, list_actions)
 
                 # pre_y += child.center_y
                 pre_edge_x += child.boundary_width
@@ -178,4 +287,3 @@ class GuiManagerMXgraph:
 
         # print(entity.name, entity.center_x, entity.center_y)
         return pre_edge_x, pre_edge_y
-

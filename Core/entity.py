@@ -4,29 +4,7 @@ import random
 import queue
 
 
-class GraphicEntity:
-    def __init__(self):
-        """
-        """
-        # Graphic variables
-        self.boundary_width = 0
-        self.boundary_height = 0
-        self.boundary_x = 0
-        self.boundary_y = 0
-        self.margin_y = 10
-        self.margin_x = 40
-        self.node_width = 80
-        self.node_height = 30
-        self.width_half = (self.node_width + self.margin_x*2)/2
-        self.height_half = (self.node_height + self.margin_y*2)/2
-        self.width = self.node_width + self.margin_x*2
-        self.height = self.node_height + self.margin_y*2
-        self.center_x = 0
-        self.center_y = 0
-        self.root_x = 0
-
-
-class Entity(GraphicEntity):
+class Entity():
     """ LIFECYCLE MODELING LANGUAGE (LML) SPECIFICATION 1.1:
     An entity is something can exist by itself and is uniquely identifiable.
     """
@@ -44,6 +22,7 @@ class Entity(GraphicEntity):
         self.relation = {}      # Relation
         self.inv_relation = {}  # Inverse Relation
         self.decomposition = True
+        self.is_root = False
 
         # All entities created are stored in the static class Entity
         Entity.store_entity(self)
@@ -420,7 +399,6 @@ class DynamicEntity(Entity):
         self.time = 0
         self.total_time = 0
         self.waiting = False
-        self.is_root = False
         self.function = None
 
     def reset(self):
@@ -493,7 +471,7 @@ class DynamicEntity(Entity):
         """
         Triggered(self, item)
 
-    def sends(self, item, amount=10):
+    def sends(self, item, receiver=None, amount=10):
         """
         This make a relation 'sends' between this DEntity and the target item
         The DEntity will fire, when the target resource are available
@@ -503,6 +481,8 @@ class DynamicEntity(Entity):
         amount: The amount that will be sent
         """
         Sends(self, item, amount)
+        if receiver is not None:
+            receiver.receives(item)
 
     def func(self, function):
         self.function = function
