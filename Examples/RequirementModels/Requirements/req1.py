@@ -28,5 +28,4 @@ r1_2 = r1.Requirement("Req 1.1.2",
                  value="4",
                  unit="m^3"
                  )
-
-print(r1)
+# print(r1)

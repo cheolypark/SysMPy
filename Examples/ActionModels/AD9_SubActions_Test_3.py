@@ -27,7 +27,7 @@ import asyncio
                             |               |
                             +---------------+ 
 """
-from Examples.ActionModels import AD9_SubActions_Test_2 as super
+from examples.ActionModels import AD9_SubActions_Test_2 as super
 
 ###############################################
 # 1 Define actions

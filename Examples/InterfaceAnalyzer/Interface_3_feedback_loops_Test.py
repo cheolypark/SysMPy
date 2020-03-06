@@ -44,7 +44,7 @@ act2.sends(i2)
 act1.receives(i2)
 
 ###############################################
-# 2 run interface analyzer
+# 2 run code_gui analyzer
 p.evaluate_interfaces()
 
 

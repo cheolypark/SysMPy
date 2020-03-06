@@ -32,7 +32,7 @@ when:       by pressing the 'Model Space Optimization Button‘, when constructi
 ###############################################
 # 1 Define requirements
 
-r1 = Requirement(id="1",
+r1 = Requirement("Functional Req'",
                  category="Function",
                  who="SAI",
                  auxv="shall",
@@ -44,9 +44,9 @@ r1 = Requirement(id="1",
                  when="by pressing the 'Model Space Optimization Button‘, when constructing an architectural model"
                 )
 
-r2 = Requirement(id="2",
+r2 = Requirement( "2",
                  category="Function",
                  who="SAI"
                 )
 
-print(r1)
+print(req1.r1)

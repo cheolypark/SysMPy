@@ -26,7 +26,7 @@ i2 = Item("Item2")
 
 
 ###############################################
-# 2 run interface analyzer
+# 2 run code_gui analyzer
 p.evaluate_interfaces()
 
 
