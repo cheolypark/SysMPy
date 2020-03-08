@@ -26,6 +26,8 @@ import asyncio
                             |               |
                             +---------------+
 """
+print('AD8_Or_Test')
+
 ###############################################
 # 1 Define actions
 p = Process("process")

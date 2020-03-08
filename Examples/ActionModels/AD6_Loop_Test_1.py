@@ -26,6 +26,8 @@ import asyncio
                             |               |
                             +---------------+
 """
+print('AD6_Loop_Test_1')
+
 ###############################################
 # 1 Define actions
 p = Process("process1")

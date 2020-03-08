@@ -39,8 +39,8 @@ act2 = p.Action("Action2")
 
 r1 = Resource("Resource1", amount=20)
 
-# This will be waiting forever, because all resources are exhausted.
-act2.consumes(r1)
+# act1.produces(r1, amount=10)
+act2.seizes(r1, amount=5)
 
 ###############################################
 # 2 run simulation

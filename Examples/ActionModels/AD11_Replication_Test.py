@@ -26,6 +26,8 @@ import asyncio
                             |               |
                             +---------------+
 """
+print('AD11_Replication_test')
+
 ###############################################
 # 1 Define actions
 p = Process("process")

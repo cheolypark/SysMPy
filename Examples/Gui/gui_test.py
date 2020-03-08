@@ -1,5 +1,8 @@
 from entity import *
 import asyncio
+from gui_mxgraph_action_diagram import GuiMXGraphActionDiagram
+from gui_mxgraph_block_diagram import GuiMXGraphBlockDiagram
+from gui_mxgraph_hierarchy_diagram import GuiMXGraphHierarchyDiagram
 
 """
                 +---------------+
@@ -29,22 +32,17 @@ import asyncio
                 |               |
                 +---------------+
 """
+# Test 1
+p = Process("Root Process")
+p_act1 = p.Action("Action2")
 
-p = Process("process")
+p1_1 = p_act1.Process("process1.1")
+act1_1 = p1_1.Action("Action1.1")
 
-p_con1 = p.And()
+print(GuiMXGraphActionDiagram().get_mxgraph(p))
+# print(GuiMXGraphHierarchyDiagram().get_mxgraph(p, type=Process))
 
-for i in range(3):
-    p2 = p_con1.Process(f"P{i}")
-
-    p_con2 = p2.Condition(f"condition{i}_2")
-    p21 = p_con2.Process(f"P{i}_1")
-    p22 = p_con2.Process(f"P{i}_2")
-
-    for j in range(2):
-        p21.Action(f"Action{i}_{j}")
-
-p.get_mxgraph()
-asyncio.run(p.sim())
-asyncio.run(p.sim())
-# print(p.get_mxgraph())
+# p.get_mx_action_diagram()
+# asyncio.run(p.sim())
+# asyncio.run(p.sim())
+# print(p.get_mx_action_diagram())

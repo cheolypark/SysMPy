@@ -44,6 +44,8 @@ import asyncio
                         
                             
 """
+print('AD10_Loop_Exit_Test')
+
 ###############################################
 # 1 Define actions
 p = Process("process")

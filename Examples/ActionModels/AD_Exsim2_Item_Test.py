@@ -28,6 +28,8 @@ import asyncio
                 |               |
                 +---------------+
 """
+print('AD_Exsim2_Item_Test')
+
 ###############################################
 # 1 Define actions
 p = Process("process 1")

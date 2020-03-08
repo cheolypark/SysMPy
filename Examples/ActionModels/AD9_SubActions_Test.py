@@ -28,6 +28,8 @@ import asyncio
                             |               |
                             +---------------+ 
 """
+print('AD9_SubActions_Test')
+
 ###############################################
 # 1 Define actions
 p = Process("process1")

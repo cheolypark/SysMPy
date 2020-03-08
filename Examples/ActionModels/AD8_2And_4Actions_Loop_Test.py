@@ -35,6 +35,8 @@ import asyncio
                             |               |
                             +---------------+
 """
+print('AD8_2And_4Actions_Loop_Test')
+
 ###############################################
 # 1 Define actions
 p = Process("process")
@@ -47,7 +49,8 @@ p_act1 = p1.Action("Action 1")
 p_act2 = p1.Action("Action 2")
 
 loop = p2.Loop()
-l_and = loop.And()
+p1_loop = loop.Process("process1_1")
+l_and = p1_loop.And()
 
 l_p1 = l_and.Process("proc3")
 l_p2 = l_and.Process("proc4")

@@ -29,7 +29,11 @@ import asyncio
                     |               |
                     +---------------+
 """
-
+print('AD5_Item_Flow_Test_1')
+#===================================================================
+# This example will stop forever, because there is no action triggering the trigger,
+# so Action 2 will be waiting it forever.
+#===================================================================
 # 1 Define actions
 p = Process("process")
 act1 = p.Action("Action1")

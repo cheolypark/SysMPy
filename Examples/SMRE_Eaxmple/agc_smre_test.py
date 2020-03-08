@@ -61,7 +61,7 @@ act2 = p.Action('action B')
 """
 # Define components
 c1 = Component("Com1", des="This is a component")
-c1_1 = Component("Com1_1", des="This is another component")
+c1_1 = c1.Component("Com1_1", des="This is another component")
 c1_2 = Component("Com1_2", des="This is another component")
 c1.decomposes(c1_1)
 c1.decomposes(c1_2)

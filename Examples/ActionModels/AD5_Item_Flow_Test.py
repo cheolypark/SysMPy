@@ -30,6 +30,8 @@ import asyncio
                 +---------------+
 """
 
+print('AD5_Item_Flow_Test')
+
 # 1 Define actions
 p = Process("process")
 box1 = p.Action("Action1")

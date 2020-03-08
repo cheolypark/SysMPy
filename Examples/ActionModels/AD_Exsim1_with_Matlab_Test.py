@@ -22,6 +22,8 @@ import asyncio
                 |               |
                 +---------------+
 """
+print('AD_Exsim_with_Matlab_Test')
+
 ###############################################
 # 1 Define actions
 p = Process("process 1")

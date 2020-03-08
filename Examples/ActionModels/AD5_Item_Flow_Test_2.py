@@ -29,6 +29,7 @@ import asyncio
                 |               |
                 +---------------+
 """
+print('AD5_Item_Flow_Test_2')
 
 # 1 Define actions
 p = Process("process 1")

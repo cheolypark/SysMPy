@@ -24,6 +24,9 @@ import asyncio
                             |               |
                             +---------------+
 """
+print('AD3_And_2Actions_Test')
+
+
 ###############################################
 # 1 Define actions
 p = Process("process")

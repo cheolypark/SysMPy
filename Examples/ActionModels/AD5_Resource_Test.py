@@ -29,6 +29,7 @@ import asyncio
                 |               |
                 +---------------+
 """
+print('AD5_Resource_Test')
 
 # 1 Define actions
 p = Process("process 1")

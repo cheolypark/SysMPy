@@ -9,6 +9,9 @@
       <sourceFolder url="file://$MODULE_DIR$/Examples/SMRE_Eaxmple/agc/AGCML/Code/Lib" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/Controller" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/code_gui/mxgraph" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/code_gui" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/Examples/ActionModels" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/Examples/Gui" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

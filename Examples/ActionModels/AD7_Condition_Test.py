@@ -33,6 +33,8 @@ import asyncio
                             |               |
                             +---------------+
 """
+print('AD7_Condition_Test')
+
 ###############################################
 # 1 Define actions
 p = Process("process0")

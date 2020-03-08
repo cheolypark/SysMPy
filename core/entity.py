@@ -2,7 +2,8 @@ import asyncio
 from relationship import *
 import random
 import queue
-
+import traceback
+import os
 
 class Entity():
     """ LIFECYCLE MODELING LANGUAGE (LML) SPECIFICATION 1.1:
@@ -28,7 +29,7 @@ class Entity():
         Entity.store_entity(self)
 
     def __str__(self):
-        return "{} decomposes {}".format(self.name, self.relation)
+        return f"{self.name} is associated with {self.relation}"
 
     def __repr__(self):
         return self.name
@@ -64,6 +65,8 @@ class Entity():
     #
     def Property(self, name, range=None, value=None):
         obj = Property(name, range, value)
+        obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+
         Contains(self, obj)
         return obj
 
@@ -71,18 +74,18 @@ class Entity():
     # Relationship Methods
     # !start with an lowercase letter
     #
-    def decomposes(self, target):
-        """
-        This makes a 'decomposes' or 'decomposes' relationship between this and a target
-        We define decomposition as composition as shown the following n-to-n relationship.
-        # composition n to n
-
-        We define the relationship 'contains' as aggregation.
-        # aggregation 1 to n
-
-        :param target: an entity is decomposed by this
-        """
-        Decomposes(self, target)
+    # def decomposes(self, target):
+    #     """
+    #     This makes a 'decomposes' or 'decomposes' relationship between this and a target
+    #     We define decomposition as composition as shown the following n-to-n relationship.
+    #     # composition n to n
+    #
+    #     We define the relationship 'contains' as aggregation.
+    #     # aggregation 1 to n
+    #
+    #     :param target: an entity is decomposed by this
+    #     """
+    #     Decomposes(self, target)
 
     def traced_from(self, target):
         """
@@ -160,6 +163,51 @@ class Entity():
                     # Perform recursion
                     rel_ins.start.search_op(breaker, space, inverse, class_search, entity_results, relation_results)
 
+    def find_root(self):
+        """
+        This finds a root process.
+        :return:
+        A root process
+        """
+        if 'contained in' not in self.inv_relation:
+            return self
+
+        r = [x for x in self.inv_relation['contained in']]
+        if r is None:
+            return
+        else:
+            for x in r:
+                root = x.start.find_root()
+        return root
+
+    def find_all_nodes(self, class_type, ret_list):
+        """
+        This finds all nodes specified in the input 'rel_type'
+        :return:
+        A list of all nodes created from the class rel_type
+        """
+
+        if 'contained in' not in self.inv_relation:
+            return
+
+        found = [x for x in self.inv_relation['contained in'] if isinstance(x.start, class_type)]
+        ret_list += found
+
+        r = [x for x in self.inv_relation['contained in']]
+        if r is None:
+            return
+        else:
+            for x in r:
+                x.start.find_all_nodes(class_type, ret_list)
+
+    def find_loop_end(self):
+        """
+        This returns a first Loop-End node
+        """
+        ret = []
+        self.find_all_nodes(Loop, ret)
+        return ret[0].start.end
+
     ########################################################################
     # Static Methods
     # Get or Search Methods
@@ -173,17 +221,30 @@ class Entity():
     @staticmethod
     def store_entity(self):
         """ All entities created are stored """
+
         Entity.entity_db.append(self)
+
+    @staticmethod
+    def clear_entity(self):
+        """ All entities created are stored """
+        Entity.entity_db.clear()
 
     @staticmethod
     def get(name_entity):
         """ This returns instances of an entity """
+
+        # Find a module which is using this get function:
+        # - last element ([-1]) is me, the one before ([-2]) is my caller.
+        # - The first element in caller's data is the filename
+        caller_path = traceback.extract_stack()[-2][0]
+        caller, file_extension = os.path.splitext(caller_path)
+
         l = name_entity.split('.')
 
         cur_obj = None
         for i in l:
             if cur_obj is None:
-                cur_obj = Entity.get_op(i)
+                cur_obj = Entity.get_op(i, caller)
             else:
                 cur_obj = Entity.get_by_relationship(cur_obj, i, 'contains')
 
@@ -211,9 +272,13 @@ class Entity():
                     return e
 
     @staticmethod
-    def get_op(name_entity):
+    def get_op(name_entity, caller=None):
         """ This returns instances of an entity by searching in the entity_db"""
-        e = [x for x in Entity.entity_db if x.name == name_entity]
+        if caller is None:
+            e = [x for x in Entity.entity_db if x.name == name_entity]
+        elif caller is not None:
+            e = [x for x in Entity.entity_db if x.name == name_entity and x.module == caller]
+
         if e is None:
             return None
         elif len(e) == 1:
@@ -230,17 +295,6 @@ class Entity():
         else:
             return e
 
-
-    ########################################################################
-    # Graphic Methods
-    #
-    def get_mxgraph(self):
-        from gui_manager_mxgraph import GuiManagerMXgraph
-
-        self.numbering('A')
-
-        return GuiManagerMXgraph().get_mxgraph(self)
-
 ########################################################################
 # Static Entity
 #
@@ -253,10 +307,10 @@ class StaticEntity(Entity):
 
     def __str__(self):
         str = self.name
-        if 'decomposes' in self.relation:
-            rel = [x.end for x in self.relation['decomposes']]
-            s = ', '.join([r.name for r in rel])
-            str += ": decomposes [{}]".format(s)
+        # if 'decomposes' in self.relation:
+        #     rel = [x.end for x in self.relation['decomposes']]
+        #     s = ', '.join([r.name for r in rel])
+        #     str += ": decomposes [{}]".format(s)
 
         if 'performs' in self.relation:
             rel = [x.end for x in self.relation['performs']]
@@ -285,6 +339,7 @@ class Property(StaticEntity):
         ['Between(1, 10)', 'Between(30, 40)']
         :param value: e.g., ) 'T', 10
         """
+        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         super().__init__(name)
         self.range = range
         self.value = value
@@ -297,6 +352,7 @@ class Property(StaticEntity):
 
 class Item(StaticEntity):
     def __init__(self, name):
+        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         super().__init__(name)
         self.attr = {}
 
@@ -314,6 +370,7 @@ class Conduit(StaticEntity):
     """
 
     def __init__(self, name):
+        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         super().__init__(name)
         self._capacity = 1
         self._delay = 0
@@ -345,7 +402,8 @@ class Conduit(StaticEntity):
 
 
 class Resource(StaticEntity):
-    def __init__(self, name, amount=5, minimum=1, maximum=10, units=None):
+    def __init__(self, name, amount=10, minimum=1, maximum=10, units=None):
+        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         super().__init__(name)
         self.amount = amount
         self.minimum = minimum
@@ -355,6 +413,7 @@ class Resource(StaticEntity):
 
 class Requirement(Property):
     def __init__(self, name, range=None, value=None, **kwargs):
+        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         super().__init__(name, range, value)
         self.kwargs = kwargs
 
@@ -372,6 +431,8 @@ class Requirement(Property):
     #
     def Requirement(self, name, range=None, value=None, **kwargs):
         obj = Requirement(name, range, value, **kwargs)
+        obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+
         Contains(self, obj)
         return obj
 
@@ -391,6 +452,7 @@ class Requirement(Property):
 
 class Component(StaticEntity):
     def __init__(self, name, **kwargs):
+        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         super().__init__(name)
         self.kwargs = kwargs
 
@@ -407,6 +469,8 @@ class Component(StaticEntity):
     #
     def Component(self, name, **kwargs):
         obj = Component(name, **kwargs)
+        obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+
         Contains(self, obj)
         return obj
 
@@ -514,10 +578,14 @@ class DynamicEntity(Entity):
         self.function = function
 
     ########################################################################
-    # SMRE_Eaxmple Methods
+    # Simulation Methods
     #
     #
     def init_sim_network(self):
+        """
+        This create a simulation network containing flows between nodes
+        :return:
+        """
         if len(self.sim_network) == 0:
             self.init_sim_network_op(self.sim_network)
 
@@ -527,13 +595,12 @@ class DynamicEntity(Entity):
 
     def init_sim_network_op(self, entities):
         """
-        This finds all flow nodes used in SMRE_Eaxmple
+        This finds all node flows
         The returning list acts will have flow nodes which are activated by Python Asyncio
 
         :param
         entities: All entities that will be accumulated
         """
-
 
         if 'contains' in self.relation:
             contains = [x.end for x in self.relation['contains']]
@@ -579,17 +646,22 @@ class DynamicEntity(Entity):
 
                 if self.end is not None:
                     for e in last_e:
-                        if not isinstance(e, Action):
+                        if isinstance(e, Action):
+                            # If e does not have the node 'end' (e.g., 'Action')
+                            # This means it doesn't have any pair
+                            e.flow(self.end)
+                            entities.append(self.end)
+                        elif isinstance(e, END) or isinstance(e, ExitLoop) :
+                            # If e is the class 'END', this means e will terminate with the root process end
+                            # When END is created, it is already associated with the root process end, so skip
+                            pass
+                        else:
                             # If e decomposes the node 'end' (e.g., 'Loop' and 'Action' containing 'process')
                             # This means there is the 'End' pair for this
                             # This 'End' pair is used for flowing to the current 'End' pair
                             e.end.flow(self.end)
-                        else:
-                            # If e does not have the node 'end' (e.g., 'Action')
-                            # This means it doesn't have any pair
-                            e.flow(self.end)
+                            entities.append(self.end)
 
-                    entities.append(self.end)
         elif isinstance(self, Process):   # This is likely to be an empty process (no 'contains' key)
             # Just let this root process to flow directly to the end
             self.flow(self.end)
@@ -780,17 +852,18 @@ class DynamicEntity(Entity):
 
                     # If this is associated with conduits, the times for conduits should be applied
                     # Calculate the conduit times
-                    conduits = [r.end.inv_relation['transferred by'] for r in triggered_true]
-                    max_delay = max([r.start._delay  for r in conduits[0]])
-                    max_capacity = max([r.start._capacity for r in conduits[0]])
-                    max_size = max([r.end._size for r in conduits[0]])
-                    max_conduits_time = max_delay + max_size/max_capacity
+                    if 'transferred by' in r.end.inv_relation:
+                        conduits = [r.end.inv_relation['transferred by'] for r in triggered_true]
+                        max_delay = max([r.start._delay  for r in conduits[0]])
+                        max_capacity = max([r.start._capacity for r in conduits[0]])
+                        max_size = max([r.end._size for r in conduits[0]])
+                        max_conduits_time = max_delay + max_size/max_capacity
 
-                    Process.store_event(self, 'triggered', info=f'After conduit flows, '
-                                            f'a time {max_conduits_time} was added')
+                        Process.store_event(self, 'triggered', info=f'After conduit flows, '
+                                                f'a time {max_conduits_time} was added')
 
-                    # Apply the conduit times to this process time
-                    self.time += max_conduits_time
+                        # Apply the conduit times to this process time
+                        self.time += max_conduits_time
 
             ##################################################################################
             #
@@ -967,6 +1040,7 @@ class Action(DynamicEntity):
     Action Dynamic Entity
     """
     def __init__(self, name, duration=1):
+        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         super().__init__(name, duration)
 
     ########################################################################
@@ -975,6 +1049,8 @@ class Action(DynamicEntity):
     #
     def Process(self, name):
         obj = Process(name)
+        obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+
         Contains(self, obj)
 
         # This action decomposes a sub-process
@@ -997,6 +1073,7 @@ class And(DynamicEntity):
     And Dynamic Entity
     """
     def __init__(self, name='and'):
+        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         super().__init__(name)
 
         # This decomposes a pair dynamic entity called 'end' or name+'_END'
@@ -1011,6 +1088,8 @@ class And(DynamicEntity):
     #
     def Process(self, name):
         obj = Process(name)
+        obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+
         Contains(self, obj)
         return obj
 
@@ -1025,6 +1104,7 @@ class Or(DynamicEntity):
     Or Dynamic Entity
     """
     def __init__(self, name='or'):
+        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         super().__init__(name)
 
         # This decomposes a pair dynamic entity called 'end' or name+'_END'
@@ -1039,6 +1119,8 @@ class Or(DynamicEntity):
     #
     def Process(self, name):
         obj = Process(name)
+        obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+
         Contains(self, obj)
         return obj
 
@@ -1054,6 +1136,7 @@ class Loop(DynamicEntity):
     """
 
     def __init__(self, name='loop', times=2):
+        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         super().__init__(name)
 
         # This decomposes a pair dynamic entity called 'end' or name+'_END'
@@ -1072,6 +1155,8 @@ class Loop(DynamicEntity):
     #
     def Process(self, name):
         obj = Process(name)
+        obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+
         Contains(self, obj)
         return obj
 
@@ -1095,6 +1180,7 @@ class Condition(DynamicEntity):
     """
 
     def __init__(self, name):
+        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         super().__init__(name)
 
         # This decomposes a pair dynamic entity called 'end' or name+'_END'
@@ -1109,6 +1195,8 @@ class Condition(DynamicEntity):
     #
     def Process(self, name):
         obj = Process(name)
+        obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+
         Contains(self, obj)
         return obj
 
@@ -1127,6 +1215,7 @@ class END(DynamicEntity):
     """
 
     def __init__(self, name):
+        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         super().__init__(name)
 
     def reset(self):
@@ -1139,7 +1228,6 @@ class ExitLoop(DynamicEntity):
 
     def reset(self):
         super().reset()
-
 
 
 class Process(DynamicEntity):
@@ -1159,6 +1247,12 @@ class Process(DynamicEntity):
     event_queue = queue.Queue()
 
     def __init__(self, name):
+        # Find a module which is using this class
+        # and set the caller's path to this class, so we can know where this object came form:
+        # - last element ([-1]) is me, the one before ([-2]) is my caller.
+        # - The first element in caller's data is the filename
+        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+
         super().__init__(name)
 
         # This decomposes a pair dynamic entity called 'end' or name+'_END'
@@ -1200,6 +1294,11 @@ class Process(DynamicEntity):
         for e in entity_results:
             print(e)
             e.check_property()
+
+    def get_action_times(self):
+        actions = Process.get_by_type(Action)
+        dict_action = {x.name:x.total_time for x in actions}
+        return dict_action
 
     ########################################################################
     # staticmethod
@@ -1283,6 +1382,7 @@ class Process(DynamicEntity):
         # Find other flows and set them into asyncio
         if 'flows' or 'contains' in self.relation:
             # Reset all global variables regarding simulation
+            Process.simulation_count = 0
             Process.global_time = 0
             Process.activated = True
             Process.global_max = until
@@ -1291,7 +1391,7 @@ class Process(DynamicEntity):
             self.init_sim_network()
 
             # print out control flows of UC
-            # self.print_flows(sim_network)
+            # self.print_flows(self.sim_network)
 
             workers = [x.run() for x in self.sim_network]
             workers.append(self.run())
@@ -1302,51 +1402,6 @@ class Process(DynamicEntity):
             except asyncio.CancelledError:
                 print('CancelledError')
                 res = None
-
-    def find_root(self):
-        """
-        This finds a root process.
-        :return:
-        A root process
-        """
-        if 'contained in' not in self.inv_relation:
-            return self
-
-        r = [x for x in self.inv_relation['contained in']]
-        if r is None:
-            return
-        else:
-            for x in r:
-                root = x.start.find_root()
-        return root
-
-    def find_all_nodes(self, class_type, ret_list):
-        """
-        This finds all nodes specified in the input 'rel_type'
-        :return:
-        A list of all nodes created from the class rel_type
-        """
-
-        if 'contained in' not in self.inv_relation:
-            return
-
-        found = [x for x in self.inv_relation['contained in'] if isinstance(x.start, class_type)]
-        ret_list += found
-
-        r = [x for x in self.inv_relation['contained in']]
-        if r is None:
-            return
-        else:
-            for x in r:
-                x.start.find_all_nodes(class_type, ret_list)
-
-    def find_loop_end(self):
-        """
-        This returns a first Loop-End node
-        """
-        ret = []
-        self.find_all_nodes(Loop, ret)
-        return ret[0].start.end
 
     ########################################################################
     # Class Creation Methods
@@ -1359,11 +1414,15 @@ class Process(DynamicEntity):
         :return:
         """
         obj = Action(name, duration)
+        obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+
         Contains(self, obj)
         return obj
 
     def And(self, *args):
         obj = And()
+        obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+
         Contains(self, obj)
 
         ret = []
@@ -1376,6 +1435,8 @@ class Process(DynamicEntity):
 
     def Or(self, *args):
         obj = Or()
+        obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+
         Contains(self, obj)
 
         ret = []
@@ -1386,24 +1447,37 @@ class Process(DynamicEntity):
 
         return obj
 
-    def Process(self, name):
-        obj = Process(name)
-        Contains(self, obj)
-        Decomposes(self, obj)
-        return obj
+    # def Process(self, name):
+    #     obj = Process(name)
+    #     Contains(self, obj)
+    #     Decomposes(self, obj)
+    #     return obj
 
     def Loop(self, times=2):
         obj = Loop(name='loop', times=times)
+        obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+
         Contains(self, obj)
         return obj
 
-    def Condition(self, name):
+    def Condition(self, name, *args):
         obj = Condition(name=name)
+        obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+
         Contains(self, obj)
+
+        ret = []
+        if args is not None and len(args) > 0:
+            for proc in args:
+                ret.append(obj.Process(proc))
+            return tuple(ret)
+
         return obj
 
     def End(self, name='END'):
         obj = END(name=name)
+        obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+
         Contains(self, obj)
         root_process = obj.find_root()
         # 'loop' is linked to 'loop_END' using the relation 'flow'
@@ -1413,6 +1487,8 @@ class Process(DynamicEntity):
 
     def ExitLoop(self, name='ExitLoop'):
         obj = ExitLoop(name=name)
+        obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+
         Contains(self, obj)
         loop_end = obj.find_loop_end()
         # 'loop' is linked to 'loop_END' using the relation 'flow'

@@ -1,13 +1,11 @@
 from entity import *
 from relationship import *
+from gui_mxgraph import GuiMXGraph
 
 
-class GuiManagerMXgraph:
+class GuiMXGraphBlockDiagram(GuiMXGraph):
     def __init__(self):
-        """
-        """
-        # mxGraph variables
-        self.mx_nodes = []
+        super().__init__()
 
     ########################################################################
     # Graphic Methods
@@ -40,11 +38,6 @@ class GuiManagerMXgraph:
         entity.center_x = 0
         entity.center_y = 0
         entity.root_x = 0
-
-    def safe_name(self, name):
-        str = name.replace(" ", "_")
-        str = str.replace(".", "_")
-        return str
 
     def make_node(self, en, x=None, y=None):
         # var v1 = graph.insertVertex(parent, null, 'Hello,', 20, 20, 80, 30) \\n
@@ -97,7 +90,7 @@ class GuiManagerMXgraph:
         if s_name not in self.mx_nodes:
             self.mx_nodes.append(s_name)
             node = f"var {s_name} = graph.insertVertex(parent, '{name}', '{label}', {x}, {y}, {node_width}, {node_height}, '{type(en).__name__}') /n "
-            node += f"{s_name}.geometry.alternateBounds = new mxRectangle(0, 0, 60, 30) /n "
+            # node += f"{s_name}.geometry.alternateBounds = new mxRectangle(0, 0, 60, 30) /n "
         #     v2.geometry.alternateBounds = new mxRectangle(0, 0, 80, 30);
         # print(node)
 
@@ -197,29 +190,6 @@ class GuiManagerMXgraph:
                 y_pos -= item.height_half
 
         return str
-
-    def get_mxgraph(self, entity):
-
-        # Set this with a root process flag
-        entity.is_root = True
-        entity.end.is_root = True
-
-        # 1. Find size and root_x of nodes
-        self.find_size_and_root_x(entity)
-
-        # 2. Find center_x and center_y for dynamic entity (e.g., Process, Action, and Condition)
-        list_actions = [] # This is used for item positioning
-        self.find_center(entity, None, 0, 0, list_actions)
-
-        self.mx_nodes = []
-        sim_network = []
-
-        # get flows from the relation 'flow' or 'contains'
-        entity.init_sim_network()
-
-        # print out control flows of UC
-        return self.get_mxgraph_string(entity, entity.sim_network, list_actions)
-
 
     def find_size_and_root_x(self, entity):
         # Init Graphic variables
@@ -325,3 +295,25 @@ class GuiManagerMXgraph:
 
         # print(entity.name, entity.center_x, entity.center_y)
         return pre_edge_x, pre_edge_y
+
+    def get_mxgraph(self, entity):
+        entity.numbering('A')
+
+        # Set this with a root process flag
+        entity.is_root = True
+        entity.end.is_root = True
+
+        # 1. Find size and root_x of nodes
+        self.find_size_and_root_x(entity)
+
+        # 2. Find center_x and center_y for dynamic entity (e.g., Process, Action, and Condition)
+        list_actions = [] # This is used for item positioning
+        self.find_center(entity, None, 0, 0, list_actions)
+
+        self.mx_nodes = []
+
+        # get flows from the relation 'flow' or 'contains'
+        entity.init_sim_network()
+
+        # print out control flows of UC
+        return self.get_mxgraph_string(entity, entity.sim_network, list_actions)
