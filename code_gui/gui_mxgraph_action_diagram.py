@@ -134,14 +134,16 @@ class GuiMXGraphActionDiagram(GuiMXGraph):
         # print(edge)
         return edge
 
-    def get_mxgraph_string(self, entity, entities, list_actions):
+    def get_mxgraph_string(self, proc_en, entities, list_actions):
         str = ''
-        flows = [r for r in entity.relation['flows'] if isinstance(r, Flow)]
+        # 1. Draw the root process entity
+        flows = [r for r in proc_en.relation['flows'] if isinstance(r, Flow)]
         for i, f in enumerate(flows):
             str += self.make_node(f.start)
             str += self.make_node(f.end)
             str += self.make_edge(f.start, f.end)
 
+        # 2. Draw other entities
         for e in entities:
             if 'flows' in e.relation:
                 flows = [r for r in e.relation['flows'] if isinstance(r, Flow)]
@@ -192,12 +194,9 @@ class GuiMXGraphActionDiagram(GuiMXGraph):
         return str
 
     def find_size_and_root_x(self, entity, parent):
-        # If this is a process derived by an action, this means a decomposed process, so it will be skipped.
-        if isinstance(entity, Process) and isinstance(parent, Action):
-            return
-
         # Init Graphic variables
         self.init_graphic_variables(entity)
+
         if hasattr(entity, 'end'):
             self.init_graphic_variables(entity.end)
 
@@ -214,18 +213,23 @@ class GuiMXGraphActionDiagram(GuiMXGraph):
             children = [r for r in entity.relation['contains'] if isinstance(r, Contains)]
             for i, c in enumerate(children):
                 child = c.end
-                self.find_size_and_root_x(child, entity)
 
-                # get children's size information
-                largest_child_width = max(child.boundary_width, largest_child_width)
-                largest_child_height = max(child.boundary_height, largest_child_height)
-                largest_root_x = max(child.root_x, largest_root_x)
-                all_child_width += child.boundary_width
-                all_child_height += child.boundary_height
-                if i == 0:
-                    first_root_x = child.root_x
-                elif i == (len(children)-1):
-                    last_root_x = child.root_x
+                # If this is a process derived by an action, this means a decomposed process, so it will be skipped.
+                if child.is_decomposed:
+                    pass
+                else:
+                    self.find_size_and_root_x(child, entity)
+
+                    # get children's size information
+                    largest_child_width = max(child.boundary_width, largest_child_width)
+                    largest_child_height = max(child.boundary_height, largest_child_height)
+                    largest_root_x = max(child.root_x, largest_root_x)
+                    all_child_width += child.boundary_width
+                    all_child_height += child.boundary_height
+                    if i == 0:
+                        first_root_x = child.root_x
+                    elif i == (len(children)-1):
+                        last_root_x = child.root_x
 
         # find boundary size and root X
         if isinstance(entity, Action):
@@ -244,7 +248,6 @@ class GuiMXGraphActionDiagram(GuiMXGraph):
         # print(f'{entity.name} boundary_width[{entity.boundary_width}] boundary_height[{entity.boundary_height}] root_x[{entity.root_x}]')
 
     def find_center(self, entity, parent, pre_edge_x, pre_edge_y, list_actions):
-        # print(f'{entity.name}')
 
         # find center_x and center_y
         if isinstance(entity, Action):
@@ -279,11 +282,15 @@ class GuiMXGraphActionDiagram(GuiMXGraph):
             for i, c in enumerate(children):
                 child = c.end
 
-                child_x, child_y = self.find_center(child, entity, pre_edge_x, pre_edge_y, list_actions)
+                # If this is a process derived by an action, this means a decomposed process, so it will be skipped.
+                if child.is_decomposed:
+                    pass
+                else:
+                    child_x, child_y = self.find_center(child, entity, pre_edge_x, pre_edge_y, list_actions)
 
-                # pre_y += child.center_y
-                pre_edge_x += child.boundary_width
-                pre_edge_y = child_y
+                    # pre_y += child.center_y
+                    pre_edge_x += child.boundary_width
+                    pre_edge_y = child_y
 
         # If there is an End pair.
         if 'pairs' in entity.relation:
@@ -300,25 +307,26 @@ class GuiMXGraphActionDiagram(GuiMXGraph):
         # print(entity.name, entity.center_x, entity.center_y)
         return pre_edge_x, pre_edge_y
 
-    def get_mxgraph(self, entity):
+    def get_mxgraph(self, proc_en):
 
-        entity.numbering('A')
+        proc_en.numbering('A')
 
         # Set this with a root process flag
-        entity.is_root = True
-        entity.end.is_root = True
+        proc_en.is_root = True
+        proc_en.end.is_root = True
+
+        # get flows from the relation 'flow' or 'contains'
+        proc_en.init_sim_network()
 
         # 1. Find size and root_x of nodes
-        self.find_size_and_root_x(entity)
+        self.find_size_and_root_x(proc_en, None)
 
         # 2. Find center_x and center_y for dynamic entity (e.g., Process, Action, and Condition)
         list_actions = [] # This is used for item positioning
-        self.find_center(entity, None, 0, 0, list_actions)
+        self.find_center(proc_en, None, 0, 0, list_actions)
 
         self.mx_nodes = []
-
-        # get flows from the relation 'flow' or 'contains'
-        entity.init_sim_network()
+        str = self.get_mxgraph_string(proc_en, proc_en.sim_network, list_actions)
 
         # print out control flows of UC
-        return self.get_mxgraph_string(entity, entity.sim_network, list_actions)
+        return str

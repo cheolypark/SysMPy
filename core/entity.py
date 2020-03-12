@@ -22,8 +22,9 @@ class Entity():
         self.description = description
         self.relation = {}      # Relation
         self.inv_relation = {}  # Inverse Relation
-        self.decomposition = True
+        self.sim_with_decomposition = True
         self.is_root = False
+        self.is_decomposed = False
 
         # All entities created are stored in the static class Entity
         Entity.store_entity(self)
@@ -57,7 +58,7 @@ class Entity():
         :param dec: 'True' denotes to execute the simulation of sub-nodes,
                     while 'False' means to skip the sub-nodes simulation.
         """
-        self.decomposition = dec
+        self.sim_with_decomposition = dec
 
     ########################################################################
     # Class Creation Methods
@@ -621,8 +622,8 @@ class DynamicEntity(Entity):
                             # e.g.,) (self)Process1->(e)Action1
                             self.flow(e)
                         else:
-                            if hasattr(cur_e, 'end') and cur_e.decomposition:
-                                # 1. 'cur_e.decomposition' is checked for skipping the decomposition of sub-nodes
+                            if hasattr(cur_e, 'end') and cur_e.sim_with_decomposition:
+                                # 1. 'cur_e.sim_with_decomposition' is checked for skipping the decomposition of sub-nodes
                                 # Especially, 'Action' can be decomposed.
                                 # 2. This 'cur_e' decomposes the node 'end'
                                 # This means that the next node 'e' should be connected to the node 'end'
@@ -634,9 +635,15 @@ class DynamicEntity(Entity):
 
                         cur_e = e
 
-                    # if this entity does not allow the decomposition, don't make any sub-flows for simulation
-                    if e.decomposition:
+                    # If this entity does not allow the decomposition, don't make any sub-flows for simulation
+                    if e.sim_with_decomposition:
                         e.init_sim_network_op(entities)
+
+                    # If this entity is Action and the current child is Process,
+                    # this means this is a decomposed entity
+                    # The decomposed entity is set on here
+                    if isinstance(e, Process) and isinstance(self, Action):
+                        self.is_decomposed = True
 
                 ######################################################################
                 # Concatenate this node to the 'END' node
