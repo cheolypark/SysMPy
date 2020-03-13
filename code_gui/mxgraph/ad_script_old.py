@@ -14,94 +14,94 @@ mxGraph_start_nice_label = '''
                              }
                              else
                              {
-                                ////////////////////////////////////////////////////////////////////////////                            
-                                // Create a window which contains this graph
-                                // var wnd = new mxWindow('AD', container, 10, 10, 800, 1000, true, true);
-                                // wnd.setMaximizable(true);
-                                // wnd.setResizable(true);
-                                // wnd.setVisible(true); 
-                                // wnd.setScrollable(true);
 
 
-                                ////////////////////////////////////////////////////////////////////////////                            
-                                // Creates the graph inside the given container
-                                var graph = new mxGraph(container);
-                                graph.setTooltips(true);
-                                graph.htmlLabels = true;
-                                graph.vertexLabelsMovable = true;
-                                new mxRubberband(graph);
-                                new mxKeyHandler(graph);
-                                
-                                ////////////////////////////////////////////////////////////////////////////                            
-                                // Do not allow removing labels from parents
-                                graph.graphHandler.removeCellsFromParent = false;
-                                
-                                // Autosize labels on insert where autosize=1
-                                graph.autoSizeCellsOnAdd = true;
-                                
-                                // Allows moving of relative cells
-                                graph.isCellLocked = function(cell){
-                                    return this.isCellsLocked();
-                                };
-                                
-                                graph.isCellResizable = function(cell){
-                                    var geo = this.model.getGeometry(cell);
-                                    return geo == null || !geo.relative;
-                                };
-                                 
-                                // Truncates the label to the size of the vertex
-                                graph.getLabel = function(cell){
-                                    var label = (this.labelsVisible) ? this.convertValueToString(cell) : '';
-                                    var geometry = this.model.getGeometry(cell);
-                                    
-                                    if (!this.model.isCollapsed(cell) && geometry != null && (geometry.offset == null ||
-                                        (geometry.offset.x == 0 && geometry.offset.y == 0)) && this.model.isVertex(cell) &&
-                                        geometry.width >= 2){
-                                        var style = this.getCellStyle(cell);
-                                        var fontSize = style[mxConstants.STYLE_FONTSIZE] || mxConstants.DEFAULT_FONTSIZE;
-                                        
-                                        //label에 한글이 있는지 없는지에 따라서 길이 설정.
-                                        check = /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/;
-                                        
-                                        if(check.test(label)){
-                                            var max = geometry.width / (12);
-                                        } 
-                                        else{
-                                            var max = geometry.width / (6);
-                                        }
-                                        
-                                        if(label.length < max){
-                                            return label;
-                                        }
-                                        else if(label.length < 2*max){ 
-                                            return label.substring(0, max) + '<br>' + label.substring(max, 2*max);
-                                        }
-                                        else if(label.length < 3*max){
-                                            return label.substring(0, max) + '<br>' + label.substring(max, 2*max) +'<br>'+ label.substring(2*max, 3*max) ;	
-                                        }
-                                        else if(label.length >= 3*max){
-                                            return label.substring(0, max) + '<br>' + label.substring(max, 2*max) +'<br>'+ label.substring(2*max, 3*max)+'...' ;	
-                                        }
+                             ////////////////////////////////////////////////////////////////////////////                            
+                             // Create a window which contains this graph
+                             // var wnd = new mxWindow('AD', container, 10, 10, 800, 1000, true, true);
+                             // wnd.setMaximizable(true);
+                             // wnd.setResizable(true);
+                             // wnd.setVisible(true); 
+                             // wnd.setScrollable(true);
+
+
+                            ////////////////////////////////////////////////////////////////////////////                            
+                            // Creates the graph inside the given container
+                            var graph = new mxGraph(container); 
+                            // graph.htmlLabels = true;
+                            // graph.vertexLabelsMovable = true;
+                            // new mxRubberband(graph);
+                            // new mxKeyHandler(graph);
+
+                            graph.setTooltips(true);
+                            graph.setPanning(true);
+                            graph.panningHandler.useLeftButtonForPanning = true;
+                            graph.setAllowDanglingEdges(false);
+                            graph.connectionHandler.select = false;
+                            graph.view.setTranslate(20, 20);
+
+                            ////////////////////////////////////////////////////////////////////////////                            
+                            // Do not allow removing labels from parents
+                            graph.graphHandler.removeCellsFromParent = false;
+
+                            // Autosize labels on insert where autosize=1
+                            graph.autoSizeCellsOnAdd = true;
+
+                            // Allows moving of relative cells
+                            graph.isCellLocked = function(cell)
+                            {
+                                return this.isCellsLocked();
+                            };
+
+                            graph.isCellResizable = function(cell)
+                            {
+                                var geo = this.model.getGeometry(cell);
+
+                                return geo == null || !geo.relative;
+                            };
+
+                            // Truncates the label to the size of the vertex
+                            graph.getLabel = function(cell)
+                            {
+                                var label = (this.labelsVisible) ? this.convertValueToString(cell) : '';
+                                var geometry = this.model.getGeometry(cell);
+
+                                if (!this.model.isCollapsed(cell) && geometry != null && (geometry.offset == null ||
+                                    (geometry.offset.x == 0 && geometry.offset.y == 0)) && this.model.isVertex(cell) &&
+                                    geometry.width >= 2)
+                                {
+                                    var style = this.getCellStyle(cell);
+                                    var fontSize = style[mxConstants.STYLE_FONTSIZE] || mxConstants.DEFAULT_FONTSIZE;
+                                    var max = geometry.width / (fontSize * 0.625);
+
+                                    if (max < label.length)
+                                    {
+                                        return label.substring(0, max) + '...';
                                     }
-                                };
-    
-                                // Enables wrapping for vertex labels
-                                graph.isWrapping = function(cell){
-                                    return this.model.isCollapsed(cell);
-                                };
-    
-                                // Enables clipping of vertex labels if no offset is defined
-                                graph.isLabelClipped = function(cell){
-                                    var geometry = this.model.getGeometry(cell);
-    
-                                    return geometry != null && !geometry.relative && (geometry.offset == null ||
-                                        (geometry.offset.x == 0 && geometry.offset.y == 0));
-                                };
-    
-                                // Gets the default parent for inserting new cells. This
-                                // is normally the first child of the root (ie. layer 0).
-                                var parent = graph.getDefaultParent();
-                         '''
+                                }
+
+                                return label;
+                            };
+
+                            // Enables wrapping for vertex labels
+                            graph.isWrapping = function(cell)
+                            {
+                                return this.model.isCollapsed(cell);
+                            };
+
+                            // Enables clipping of vertex labels if no offset is defined
+                            graph.isLabelClipped = function(cell)
+                            {
+                                var geometry = this.model.getGeometry(cell);
+
+                                return geometry != null && !geometry.relative && (geometry.offset == null ||
+                                    (geometry.offset.x == 0 && geometry.offset.y == 0));
+                            };
+
+                            // Gets the default parent for inserting new cells. This
+                            // is normally the first child of the root (ie. layer 0).
+                            var parent = graph.getDefaultParent();
+                     '''
 
 mxGraph_styles = '''                            
                             // Set styles  

@@ -70,4 +70,12 @@ Developers:
 
 - Dr. Cheol Young Park
 - Dr. Shou Matsumoto 
-- SeongRae Lim
+- Mr. DaePhil Han
+- Mr. EunHak Lee 
+- Mr. SeongRae Lim
+
+Advisers:
+
+- Prof. Lee
+- Dr. GwanTaik Lim
+- Prof. YoungWon Park
