@@ -76,6 +76,6 @@ Developers:
 
 Advisers:
 
-- Prof. Lee
+- Prof. Joongyoon Lee
 - Dr. GwanTaik Lim
 - Prof. YoungWon Park
