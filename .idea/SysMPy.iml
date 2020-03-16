@@ -12,6 +12,7 @@
       <sourceFolder url="file://$MODULE_DIR$/code_gui" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/Examples/ActionModels" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/Examples/Gui" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/Examples/BlockModels" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

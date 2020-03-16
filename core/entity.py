@@ -417,6 +417,7 @@ class Requirement(Property):
         self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         super().__init__(name, range, value)
         self.kwargs = kwargs
+        self.is_root = True
 
     def check_property(self):
         if 'traced to' in self.inv_relation:
@@ -432,6 +433,7 @@ class Requirement(Property):
     #
     def Requirement(self, name, range=None, value=None, **kwargs):
         obj = Requirement(name, range, value, **kwargs)
+        obj.is_root = False
         obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
         Contains(self, obj)
@@ -456,6 +458,7 @@ class Component(StaticEntity):
         self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         super().__init__(name)
         self.kwargs = kwargs
+        self.is_root = True
 
     ########################################################################
     # Relationship Methods
@@ -470,6 +473,7 @@ class Component(StaticEntity):
     #
     def Component(self, name, **kwargs):
         obj = Component(name, **kwargs)
+        obj.is_root = False
         obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
         Contains(self, obj)
@@ -1056,6 +1060,7 @@ class Action(DynamicEntity):
     #
     def Process(self, name):
         obj = Process(name)
+        obj.is_root = False
         obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
         Contains(self, obj)
@@ -1095,6 +1100,7 @@ class And(DynamicEntity):
     #
     def Process(self, name):
         obj = Process(name)
+        obj.is_root = False
         obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
         Contains(self, obj)
@@ -1126,6 +1132,7 @@ class Or(DynamicEntity):
     #
     def Process(self, name):
         obj = Process(name)
+        obj.is_root = False
         obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
         Contains(self, obj)
@@ -1162,6 +1169,7 @@ class Loop(DynamicEntity):
     #
     def Process(self, name):
         obj = Process(name)
+        obj.is_root = False
         obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
         Contains(self, obj)
@@ -1202,6 +1210,7 @@ class Condition(DynamicEntity):
     #
     def Process(self, name):
         obj = Process(name)
+        obj.is_root = False
         obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
         Contains(self, obj)
@@ -1261,6 +1270,8 @@ class Process(DynamicEntity):
         self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
         super().__init__(name)
+
+        self.is_root = True
 
         # This decomposes a pair dynamic entity called 'end' or name+'_END'
         self.end = Process_END(name + '_END')
