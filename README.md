@@ -3,7 +3,7 @@
 ## About
 SysMPy is an open-source library for System Modeling Runtime Environment (SMRE), an integrated software environment which offers several built-in libraries to support systems analysis and design, based on a convenient systems modeling script language, which forms a fundamental building block of SMRE.
 
-### Systems modeling script language (SMS)
+### Systems Modeling Script (SMS)
 Example 1: Three action nodes 
 
 SMS has a simple form as shown the following code. 
