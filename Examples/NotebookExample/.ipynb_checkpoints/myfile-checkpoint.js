@@ -1,0 +1,3 @@
+window.myfun = () => {
+    alert('hi');
+}
