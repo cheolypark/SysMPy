@@ -73,6 +73,7 @@ Developers:
 - Mr. DaePhil Han
 - Mr. EunHak Lee 
 - Mr. SeongRae Lim
+- Mr. Hong Gyu Han
 
 Advisers:
 
