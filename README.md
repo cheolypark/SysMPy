@@ -70,7 +70,7 @@ Developers:
 
 - Dr. Cheol Young Park
 - Dr. Shou Matsumoto 
-- Mr. DaePhil Han
+- Mr. DaePhil Han (minimal)
 - Mr. EunHak Lee 
 - Mr. SeongRae Lim
 - Mr. Hong Gyu Han
