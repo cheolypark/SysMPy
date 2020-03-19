@@ -1,9 +1,26 @@
-# SysMPy
+# 시스템 설명
  
-## About
-SysMPy is an open-source library for System Modeling Runtime Environment (SMRE), an integrated software environment which offers several built-in libraries to support systems analysis and design, based on a convenient systems modeling script language, which forms a fundamental building block of SMRE.
+### 디렉토리 구성
+```
+SysMPy
+  ├─ code_gui : 
+  │   ├─ mxgraph   
+  │   └─ ...   
+  ├─ core : 중심 모듈
+  ├─ docs : 참고 문서
+  ├─ Examples : 예제
+  │   ├─ ActionModels   
+  │   ├─ BlockModels   
+  │   ├─ Gui   
+  │   ├─ ...   
+  │   └─ ...   
+  └─ venv : 개발환경(파이참)
+```
 
-### Systems Modeling Script (SMS)
+### 디렉토리별 파일
+```
+차후 정리
+```
 Example 1: Three action nodes 
 
 SMS has a simple form as shown the following code. 
