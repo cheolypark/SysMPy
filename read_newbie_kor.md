@@ -37,31 +37,53 @@ SysMPy
 
 
 
-### 디렉토리별 파일
+### 디렉토리별 주요 파일
 ```
-차후 정리
+- core
+  . entity.py : 모든 주요 엔티티 객체가 정의되어 있음  
+
+나머지 차후 정리
 ```
 
 
-
-
-### 흐름 설명
+### U2G 흐름 설명
 - 5_Script_mxGraph_all.ipynb
     - import gui_main
     - UnifiedCode 작성 ( 예: p_act1 = p3.Action("Action2") )
     - show( p )
 - gui_main.py
-    - import GuiMXGraphActionDiagram
+    - import gui_mxgraph_action_diagram
     - show() 메소드 
         - iframe = "http://localhost:8080/AD/?g=" + GuiMXGraphActionDiagram().get_mxgraph(p)
         - display(HTML(iframe))
-- GuiMXGraphActionDiagram.py
-    - import GuiMXGraph
+- gui_mxgraph_action_diagram.py
+    - import gui_mxgraph
     - class GuiMXGraphActionDiagram(GuiMXGraph): 클래스 선언
         - 클래스 내의 get_mxgraph() 메소드
-            - 각노드들 정리, 위치 등..
-- GuiMXGraph.py
-    
+            - 각노드들 정리, 위치 등이 담긴 str 반환
+- gui_mxgraph.py
+    - GuiMXGraph : 클래스 선언 - GuiMXGraphActionDiagram의 부모 클래스
     
 - 제어는 토네이도 서버로..
-- 
+    - get 으로 넘어가는 자료의 예
+        - var A_Root_Process = graph.insertVertex(parent, 'A Root Process', '', 305.0, 42.0, 30, 30, 'Process')
+        - var A_1_1_P1 = graph.insertVertex(parent, 'A.1.1 P1', '', 200.0, 141.0, 0, 0, 'Process')  
+
+- tornado_mx_server.py
+    - import ad_script
+    - class ActionDiagramHandler(RequestHandler): 핸들러 클래스 선언
+        - self.write(ad_script.mxGraph_start_nice_label + ad_script.mxGraph_styles + my_graph + ad_script.mxGraph_end)
+            - my_graph 가 넘겨 받은 정보
+        - self.render('simple_mx_web.html')
+
+- ad_script.py
+    - mxGraph_start_nice_label = ''' mxGraph 설정 및 스크립트 앞쪽 하드코딩 ''''
+    - mxGraph_styles = ''' mxGraph 객체 스타일 하드코딩 ''''
+    - mxGraph_end = ''' mxGraph 스크립트 뒤쪽 하드코딩 ''''
+    - mxGraph_graph = ''' mxGraph 객체 하드코딩 ''''
+
+- simple_mx_web.html
+    - mxGraph가 표현될 html 
+    
+    
+    
