@@ -1,0 +1,3 @@
+requests
+tornado>=6.0.1
+spacy>=2.2.2

@@ -59,11 +59,9 @@ asyncio.run(p.sim())
 ```
 
 ### Prerequisites
-The following pakages are needed to run the library.
-- requests
-- numpy
-- tornado
-- python for matlab 
+The following pakages would be needed to run the library. 
+- Python for matlab:
+https://www.mathworks.com/help/matlab/matlab_external/install-the-matlab-engine-for-python.html
 
 ### Members
 Developers:
