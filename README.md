@@ -15,9 +15,9 @@ pip install sysmpy
 This tutorial walks you through how to run a simple SysMPy project. 
 It will show you how to write a simple system modeling script and execute it.
 
-#### Example 1: Three action nodes 
+#### Example 1: Simple Three Action Model 
 
-This tutorial uses a simple project named a simple action model. 
+This tutorial uses a simple project named a simple three action model. 
 If you are unfamiliar with Python, take a time to study Python (https://www.python.org/).
 
 SMS has a simple form as shown the following code. 
