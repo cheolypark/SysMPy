@@ -1,5 +1,5 @@
-from entity import *
-from relationship import *
+from sysmpy.entity import *
+from sysmpy.relationship import *
 import sys, inspect
 
 

@@ -52,7 +52,7 @@ act2.receives(i4)
 act4.receives(i3)
 
 ###############################################
-# 2 run code_gui analyzer
+# 2 run gui analyzer
 p.evaluate_interfaces()
 
 

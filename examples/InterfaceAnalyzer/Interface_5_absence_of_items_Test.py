@@ -22,7 +22,7 @@ act1 = p.Action("Action1")
 act2 = p.Action("Action2")
 
 ###############################################
-# 2 run code_gui analyzer
+# 2 run gui analyzer
 p.evaluate_interfaces()
 
 

@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="SysMPy",
-    version="0.0.1",
+    version="0.0.7",
     author="SysMPy Team",
     license="Apache License Version 2.0",
     author_email="pcyoung75@gmail.com",

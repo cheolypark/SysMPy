@@ -4,11 +4,9 @@ import asyncio
 from IPython.core.display import HTML
 from IPython.display import IFrame
 from IPython.display import HTML
-import requests
-import urllib
-from gui_mxgraph_action_diagram import GuiMXGraphActionDiagram
-from gui_mxgraph_block_diagram import GuiMXGraphBlockDiagram
-from gui_mxgraph_hierarchy_diagram import GuiMXGraphHierarchyDiagram
+from gui.gui_mxgraph_action_diagram import GuiMXGraphActionDiagram
+from gui.gui_mxgraph_block_diagram import GuiMXGraphBlockDiagram
+from gui.gui_mxgraph_hierarchy_diagram import GuiMXGraphHierarchyDiagram
 
 
 def show(p, width=960, height=750, diagram='AD', type=Action):

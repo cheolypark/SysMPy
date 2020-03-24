@@ -1,5 +1,5 @@
 import asyncio
-from relationship import *
+from sysmpy.relationship import *
 import random
 import queue
 import traceback
@@ -366,7 +366,7 @@ class Item(StaticEntity):
 
 class Conduit(StaticEntity):
     """
-    Conduit is a kind of link or code_gui.
+    Conduit is a kind of link or gui.
     Conduit is associated with items.
     """
 

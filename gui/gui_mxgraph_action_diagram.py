@@ -1,9 +1,9 @@
-from entity import *
-from relationship import *
-from gui_mxgraph import GuiMXGraph
+from sysmpy.entity import *
+from sysmpy.relationship import *
+from gui.gui_mxgraph import GuiMXGraph
 
 
-class GuiMXGraphHierarchyDiagram(GuiMXGraph):
+class GuiMXGraphActionDiagram(GuiMXGraph):
     def __init__(self):
         super().__init__()
 
@@ -90,9 +90,6 @@ class GuiMXGraphHierarchyDiagram(GuiMXGraph):
         if s_name not in self.mx_nodes:
             self.mx_nodes.append(s_name)
             node = f"var {s_name} = graph.insertVertex(parent, '{name}', '{label}', {x}, {y}, {node_width}, {node_height}, '{type(en).__name__}') /n "
-
-
-            # node += f"addOverlay({s_name});"
             # node += f"{s_name}.geometry.alternateBounds = new mxRectangle(0, 0, 60, 30) /n "
         #     v2.geometry.alternateBounds = new mxRectangle(0, 0, 80, 30);
         # print(node)
@@ -137,14 +134,16 @@ class GuiMXGraphHierarchyDiagram(GuiMXGraph):
         # print(edge)
         return edge
 
-    def get_mxgraph_string(self, entity, entities):
+    def get_mxgraph_string(self, proc_en, entities, list_actions):
         str = ''
-        flows = [r for r in entity.relation['flows'] if isinstance(r, Flow)]
+        # 1. Draw the root process entity
+        flows = [r for r in proc_en.relation['flows'] if isinstance(r, Flow)]
         for i, f in enumerate(flows):
             str += self.make_node(f.start)
             str += self.make_node(f.end)
             str += self.make_edge(f.start, f.end)
 
+        # 2. Draw other entities
         for e in entities:
             if 'flows' in e.relation:
                 flows = [r for r in e.relation['flows'] if isinstance(r, Flow)]
@@ -156,20 +155,99 @@ class GuiMXGraphHierarchyDiagram(GuiMXGraph):
                     else:
                         str += self.make_edge(f.start, f.end)
 
+        # For items
+        for action in list_actions:
+            receiving_items = []
+
+            if 'receives' in action.relation:
+                receiving_items += [r.end for r in action.relation['receives'] if isinstance(r, Receives)]
+
+            if 'consumes' in action.relation:
+                receiving_items += [r.end for r in action.relation['consumes'] if isinstance(r, Consumes)]
+
+            y_pos = 0
+            for item in receiving_items:
+                self.init_graphic_variables(item)
+
+                if 'sent from' in item.inv_relation:
+                    sender = item.inv_relation['sent from'][0].start
+
+                if 'produced by' in item.inv_relation:
+                    sender = item.inv_relation['produced by'][0].start
+
+                direction = action.center_x - sender.center_x
+                if direction > 10:
+                    item.center_x = action.center_x - action.boundary_width/2
+                elif direction < -10:
+                    item.center_x = action.center_x + action.boundary_width/2
+                else:
+                    item.center_x = action.center_x - action.boundary_width/2
+
+                item.center_y = action.center_y
+
+                str += self.make_node(item, item.center_x, item.center_y + y_pos)
+                str += self.make_edge(sender, item)
+                str += self.make_edge(item, action)
+
+                y_pos -= item.height_half
+
         return str
 
-    def find_size_and_root_x(self, entity):
+    def find_size_and_root_x(self, entity, parent):
         # Init Graphic variables
         self.init_graphic_variables(entity)
+
+        if hasattr(entity, 'end'):
+            self.init_graphic_variables(entity.end)
+
+        # Set Graphic variables
+        largest_child_width = entity.width # The default size is its size
+        largest_child_height = entity.height
+        largest_root_x = entity.width_half
+        first_root_x = 0
+        last_root_x = 0
+        all_child_width = 0
+        all_child_height = 0
 
         if 'contains' in entity.relation:
             children = [r for r in entity.relation['contains'] if isinstance(r, Contains)]
             for i, c in enumerate(children):
                 child = c.end
-                self.find_size_and_root_x(child)
+
+                # If this is a process derived by an action, this means a decomposed process, so it will be skipped.
+                if child.is_decomposed:
+                    pass
+                else:
+                    self.find_size_and_root_x(child, entity)
+
+                    # get children's size information
+                    largest_child_width = max(child.boundary_width, largest_child_width)
+                    largest_child_height = max(child.boundary_height, largest_child_height)
+                    largest_root_x = max(child.root_x, largest_root_x)
+                    all_child_width += child.boundary_width
+                    all_child_height += child.boundary_height
+                    if i == 0:
+                        first_root_x = child.root_x
+                    elif i == (len(children)-1):
+                        last_root_x = child.root_x
+
+        # find boundary size and root X
+        if isinstance(entity, Action):
+            entity.boundary_width = entity.width
+            entity.boundary_height = entity.height
+            entity.root_x = entity.boundary_width/2
+        elif isinstance(entity, And) or isinstance(entity, Condition) or isinstance(entity, Or):
+            entity.boundary_width = all_child_width
+            entity.boundary_height = largest_child_height + (entity.height)*2 # itself and its End pair
+            entity.root_x = (all_child_width - last_root_x - first_root_x)/2 + first_root_x
+        elif isinstance(entity, Process) or isinstance(entity, Loop):
+            entity.boundary_width = largest_child_width
+            entity.boundary_height = all_child_height + (entity.height)*2 # itself and its End pair
+            entity.root_x = largest_root_x
+
+        # print(f'{entity.name} boundary_width[{entity.boundary_width}] boundary_height[{entity.boundary_height}] root_x[{entity.root_x}]')
 
     def find_center(self, entity, parent, pre_edge_x, pre_edge_y, list_actions):
-        # print(f'{entity.name}')
 
         # find center_x and center_y
         if isinstance(entity, Action):
@@ -204,11 +282,15 @@ class GuiMXGraphHierarchyDiagram(GuiMXGraph):
             for i, c in enumerate(children):
                 child = c.end
 
-                child_x, child_y = self.find_center(child, entity, pre_edge_x, pre_edge_y, list_actions)
+                # If this is a process derived by an action, this means a decomposed process, so it will be skipped.
+                if child.is_decomposed:
+                    pass
+                else:
+                    child_x, child_y = self.find_center(child, entity, pre_edge_x, pre_edge_y, list_actions)
 
-                # pre_y += child.center_y
-                pre_edge_x += child.boundary_width
-                pre_edge_y = child_y
+                    # pre_y += child.center_y
+                    pre_edge_x += child.boundary_width
+                    pre_edge_y = child_y
 
         # If there is an End pair.
         if 'pairs' in entity.relation:
@@ -225,38 +307,26 @@ class GuiMXGraphHierarchyDiagram(GuiMXGraph):
         # print(entity.name, entity.center_x, entity.center_y)
         return pre_edge_x, pre_edge_y
 
-    def get_mxgraph(self, entity, type=Action):
-        entity.numbering('A')
+    def get_mxgraph(self, proc_en):
 
-        entity_results, relation_results = entity.search(class_search=[type])
+        proc_en.numbering('A')
 
-        str = ''
-        root_name = 'root'
-        str += f"var {root_name} = graph.insertVertex(parent, '{root_name}', '{root_name}', 0, 0, 80, 30, 'Action') /n "
+        # Set this with a root process flag
+        proc_en.is_root = True
+        proc_en.end.is_root = True
 
-        for e in entity_results:
-            s_name = self.safe_name(e.name)
-            str += f"var {s_name} = graph.insertVertex(parent, '{e.name}', '{e.name}', 0, 0, 80, 30, '{e.__class__.__name__}') /n "
+        # get flows from the relation 'flow' or 'contains'
+        proc_en.init_sim_network()
 
-            str += f"var {root_name}_{s_name} = graph.insertEdge(parent, null, '', {root_name}, {s_name} ) /n "
+        # 1. Find size and root_x of nodes
+        self.find_size_and_root_x(proc_en, None)
 
-        #
-        # # Set this with a root process flag
-        # entity.is_root = True
-        # entity.end.is_root = True
-        #
-        # # 1. Find size and root_x of nodes
-        # self.find_size_and_root_x(entity)
-        #
-        # # 2. Find center_x and center_y for dynamic entity (e.g., Process, Action, and Condition)
-        # list_actions = [] # This is used for item positioning
-        # self.find_center(entity, None, 0, 0, list_actions)
-        #
-        # self.mx_nodes = []
-        #
-        # # get flows from the relation 'flow' or 'contains'
-        # entity.init_sim_network()
+        # 2. Find center_x and center_y for dynamic entity (e.g., Process, Action, and Condition)
+        list_actions = [] # This is used for item positioning
+        self.find_center(proc_en, None, 0, 0, list_actions)
+
+        self.mx_nodes = []
+        str = self.get_mxgraph_string(proc_en, proc_en.sim_network, list_actions)
 
         # print out control flows of UC
-        # return self.get_mxgraph_string(entity, entity.sim_network, list_actions)
         return str
