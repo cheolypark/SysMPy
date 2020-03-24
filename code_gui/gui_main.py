@@ -33,6 +33,26 @@ def show(p, width=960, height=750, diagram='AD', type=Action):
            """
 
     display(HTML(iframe))
+
+
+def show2(p, width=960, height=750, diagram='AD', type=Action):
+    src = ''
+    graph = GuiMXGraphActionDiagram().get_mxgraph(p)
+    print(graph)
+    src = "http://www.sysmpy.org/view/?g=" + graph
+
+    # parsed_html = urllib.parse.quote(view_html, safe="~@#$&()*!+=:;,.?/\'")
+    iframe = f"""
+           <iframe
+               width="{width}"
+               height="{height}"
+               src="{src}"
+               frameborder="0"
+               allowfullscreen
+           ></iframe>
+           """
+
+    display(HTML(iframe))
 #
 # def show(p):
 #     IFrame("http://localhost:8080/?g=" + p.get_mx_action_diagram(), width=1000, height=700)

@@ -1,1 +1,0 @@
-a = 'it works easily...'
