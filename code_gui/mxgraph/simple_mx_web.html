@@ -9,7 +9,27 @@
 
    <!-- Loads and initializes the library -->
    <script type="text/javascript" src="../src/js/mxClient.js"></script>
-
+   <script type="text/javascript">
+   function delAction1()
+   {
+      var f = document.createElement("form");
+      f.setAttribute("charset", "UTF-8");
+      f.setAttribute("method", "get");
+      f.setAttribute("action", "/aaa/"); //요청 보낼 주소
+      var field = document.createElement("input");
+      field.setAttribute("type", "hidden");
+      field.setAttribute("name", "evt");
+      field.setAttribute("value", "적폐청산!! 모든이들의 투표!!");
+      f.appendChild(field);
+      //hiddenField = document.createElement("input");
+      //hiddenField.setAttribute("type", "hidden");
+      //hiddenField.setAttribute("name", "mEmail");
+      //hiddenField.setAttribute("value", mEmail);
+      //f.appendChild(hiddenField);
+      document.body.appendChild(f);
+      f.submit();
+   }
+   </script>
    <!-- Example code
    <script type="text/javascript">
       // Program starts here. Creates a sample graph in the
@@ -56,7 +76,9 @@
 
 <!-- Page passes the container for the graph to the program -->
 <body onload="main(document.getElementById('graphContainer'))">
-
+   <div id="btnDiv" style="overflow:hidden;">
+      <button onclick="delAction1()"  >Action1 삭제</button>
+   </div>
    <!-- Creates a container for the graph with a grid wallpaper -->
    <div id="graphContainer" style="overflow:hidden;">
       <!--style="overflow:hidden;width:500px;height:2000px;background:url('editors/images/grid.gif')">-->
