@@ -28,7 +28,11 @@ class aaa(RequestHandler):
         my_graph = self.get_arguments("evt")
         my_graph = str(my_graph[0])
         my_graph = my_graph.replace("/n", "\n")
+        entt = Entity.get( "Root Process" )
         self.write( my_graph )
+
+        aaa = entt.get("신규액션" )
+        print( id( aaa ) )
 
 
 # /ad_sample/ 핸들러
