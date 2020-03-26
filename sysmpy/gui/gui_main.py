@@ -9,7 +9,8 @@ from sysmpy.gui.gui_mxgraph_block_diagram import GuiMXGraphBlockDiagram
 from sysmpy.gui.gui_mxgraph_hierarchy_diagram import GuiMXGraphHierarchyDiagram
 import urllib
 
-def show(p, width=960, height=750, diagram='AD', type=Action):
+
+def show2(p, width=960, height=750, diagram='AD', type=Action):
     src = ''
 
     if diagram == 'AD':
@@ -33,7 +34,7 @@ def show(p, width=960, height=750, diagram='AD', type=Action):
     display(HTML(iframe))
 
 
-def show2(p, width=960, height=750, diagram='AD', type=Action):
+def show(p, width=960, height=750, diagram='AD', type=Action):
     src = ''
     graph = GuiMXGraphActionDiagram().get_mxgraph(p)
     # print(graph)

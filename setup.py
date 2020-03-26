@@ -1,11 +1,17 @@
 import setuptools
 
+# Reference:
+# https://packaging.python.org/tutorials/packaging-projects/
+# python setup.py sdist bdist_wheel
+# python -m twine upload dist/*
+
+
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name="SysMPy",
-    version="0.0.7",
+    version="0.0.8",
     author="SysMPy Team",
     license="Apache License Version 2.0",
     author_email="pcyoung75@gmail.com",
