@@ -1,13 +1,13 @@
-from entity import *
+from sysmpy.entity import *
 import asyncio
 
 from IPython.core.display import HTML
 from IPython.display import IFrame
 from IPython.display import HTML
-from gui.gui_mxgraph_action_diagram import GuiMXGraphActionDiagram
-from gui.gui_mxgraph_block_diagram import GuiMXGraphBlockDiagram
-from gui.gui_mxgraph_hierarchy_diagram import GuiMXGraphHierarchyDiagram
-
+from sysmpy.gui.gui_mxgraph_action_diagram import GuiMXGraphActionDiagram
+from sysmpy.gui.gui_mxgraph_block_diagram import GuiMXGraphBlockDiagram
+from sysmpy.gui.gui_mxgraph_hierarchy_diagram import GuiMXGraphHierarchyDiagram
+import urllib
 
 def show(p, width=960, height=750, diagram='AD', type=Action):
     src = ''
@@ -36,8 +36,10 @@ def show(p, width=960, height=750, diagram='AD', type=Action):
 def show2(p, width=960, height=750, diagram='AD', type=Action):
     src = ''
     graph = GuiMXGraphActionDiagram().get_mxgraph(p)
-    print(graph)
+    # print(graph)
     src = "http://www.sysmpy.org/view/?g=" + graph
+    # parsed_html = urllib.parse.quote(src, safe="~@#$&()*!+=:;,.?/\'")
+    # print(parsed_html)
 
     # parsed_html = urllib.parse.quote(view_html, safe="~@#$&()*!+=:;,.?/\'")
     iframe = f"""

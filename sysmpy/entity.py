@@ -5,6 +5,7 @@ import queue
 import traceback
 import os
 
+
 class Entity():
     """ LIFECYCLE MODELING LANGUAGE (LML) SPECIFICATION 1.1:
     An entity is something can exist by itself and is uniquely identifiable.
@@ -1143,7 +1144,7 @@ class Or_END(DynamicEntity):
     def __init__(self, name):
         super().__init__(name)
 
-# new test ======================================================
+
 class Loop(DynamicEntity):
     """
     Loop Dynamic Entity

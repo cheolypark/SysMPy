@@ -1,6 +1,6 @@
 from sysmpy.entity import *
 from sysmpy.relationship import *
-from gui.gui_mxgraph import GuiMXGraph
+from sysmpy.gui.gui_mxgraph import GuiMXGraph
 
 
 class GuiMXGraphHierarchyDiagram(GuiMXGraph):
