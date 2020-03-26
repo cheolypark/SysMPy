@@ -12,6 +12,7 @@ from sysmpy.matrix_for_graph import *
 from sysmpy.script_to_model import *
 from sysmpy.script_generator import *
 from sysmpy.sms_searcher import *
+from sysmpy.gui.gui_main import *
 
 # Only these modules will be imported with "import *"
 # __all__ = ["entity", "relationship"]
