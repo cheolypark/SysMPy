@@ -1,5 +1,5 @@
-from sysmpy.entity import *
-from sysmpy.matrix_for_graph import MatrixForGraph
+from entity import *
+from matrix_for_graph import MatrixForGraph
 
 
 class InterfaceAnalyzer:

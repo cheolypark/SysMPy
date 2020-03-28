@@ -1,9 +1,10 @@
 import asyncio
-from sysmpy.relationship import *
+from relationship import *
 import random
 import queue
 import traceback
 import os
+import sysmpy.entity_db as entity_db
 
 
 class Entity():
@@ -11,13 +12,9 @@ class Entity():
     An entity is something can exist by itself and is uniquely identifiable.
     """
 
-    # This is a database for all entities
-    entity_db = []
     _debug_mode = False
 
     def __init__(self, name, number=None, description=None):
-        super().__init__()
-
         self.name = name
         self.number = number
         self.description = description
@@ -26,9 +23,11 @@ class Entity():
         self.sim_with_decomposition = True
         self.is_root = False
         self.is_decomposed = False
+        self.module = None
 
         # All entities created are stored in the static class Entity
-        Entity.store_entity(self)
+        entity_db.store_entity(self)
+        # Entity.store_entity(self)
 
     def __str__(self):
         return f"{self.name} is associated with {self.relation}"
@@ -210,92 +209,14 @@ class Entity():
         self.find_all_nodes(Loop, ret)
         return ret[0].start.end
 
-    ########################################################################
-    # Static Methods
-    # Get or Search Methods
-    # The following methods is for a global entity
-    #
-
+    # ########################################################################
+    # # Static Methods
+    # # Get or Search Methods
+    # # The following methods is for a global entity
+    # #
     @staticmethod
     def debug_mode(b):
         Entity._debug_mode = b
-
-    @staticmethod
-    def store_entity(self):
-        """ All entities created are stored """
-
-        Entity.entity_db.append(self)
-
-    @staticmethod
-    def clear_entity(self):
-        """ All entities created are stored """
-        Entity.entity_db.clear()
-
-    @staticmethod
-    def get(name_entity):
-        """ This returns instances of an entity """
-
-        # Find a module which is using this get function:
-        # - last element ([-1]) is me, the one before ([-2]) is my caller.
-        # - The first element in caller's data is the filename
-        caller_path = traceback.extract_stack()[-2][0]
-        caller, file_extension = os.path.splitext(caller_path)
-
-        l = name_entity.split('.')
-
-        cur_obj = None
-        for i in l:
-            if cur_obj is None:
-                cur_obj = Entity.get_op(i, caller)
-            else:
-                cur_obj = Entity.get_by_relationship(cur_obj, i, 'contains')
-
-        return cur_obj
-
-    @staticmethod
-    def get_by_relationship(obj_parent, name_target, relationship):
-        """
-        This returns instances of an entity in a parent entity by using the relationship name
-        e.g.,)
-        cur_obj = Component()
-        Entity.get_by_relationship(cur_obj, 'size', 'contains')
-
-        """
-
-        if relationship in obj_parent.relation:
-            relations = [x.end for x in obj_parent.relation[relationship]]
-            if relations is not None:
-                e = [x for x in relations if x.name == name_target]
-                if e is None:
-                    return None
-                elif len(e) == 1:
-                    return e[0]
-                else:
-                    return e
-
-    @staticmethod
-    def get_op(name_entity, caller=None):
-        """ This returns instances of an entity by searching in the entity_db"""
-        if caller is None:
-            e = [x for x in Entity.entity_db if x.name == name_entity]
-        elif caller is not None:
-            e = [x for x in Entity.entity_db if x.name == name_entity and x.module == caller]
-
-        if e is None:
-            return None
-        elif len(e) == 1:
-            return e[0]
-        else:
-            return e
-
-    @staticmethod
-    def get_by_type(type_entity):
-        """ This returns instances of an entity by the entity type"""
-        e = [x for x in Entity.entity_db if isinstance(x, type_entity)]
-        if e is None:
-            return None
-        else:
-            return e
 
 ########################################################################
 # Static Entity
@@ -341,8 +262,8 @@ class Property(StaticEntity):
         ['Between(1, 10)', 'Between(30, 40)']
         :param value: e.g., ) 'T', 10
         """
-        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         super().__init__(name)
+        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         self.range = range
         self.value = value
 
@@ -354,8 +275,8 @@ class Property(StaticEntity):
 
 class Item(StaticEntity):
     def __init__(self, name):
-        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         super().__init__(name)
+        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         self.attr = {}
 
         # Item size is used for conduit operation
@@ -372,8 +293,8 @@ class Conduit(StaticEntity):
     """
 
     def __init__(self, name):
-        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         super().__init__(name)
+        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         self._capacity = 1
         self._delay = 0
 
@@ -405,8 +326,8 @@ class Conduit(StaticEntity):
 
 class Resource(StaticEntity):
     def __init__(self, name, amount=10, minimum=1, maximum=10, units=None):
-        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         super().__init__(name)
+        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         self.amount = amount
         self.minimum = minimum
         self.maximum = maximum
@@ -415,8 +336,8 @@ class Resource(StaticEntity):
 
 class Requirement(Property):
     def __init__(self, name, range=None, value=None, **kwargs):
-        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         super().__init__(name, range, value)
+        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         self.kwargs = kwargs
         self.is_root = True
 
@@ -456,8 +377,8 @@ class Requirement(Property):
 
 class Component(StaticEntity):
     def __init__(self, name, **kwargs):
-        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         super().__init__(name)
+        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         self.kwargs = kwargs
         self.is_root = True
 
@@ -963,7 +884,7 @@ class DynamicEntity(Entity):
                     if isinstance(self, Action):
                         if self.function is not None:
                             # Perform a function script for selection
-                            selected = self.function(Entity)
+                            selected = self.function(entity_db)
 
                     if isinstance(self, Or):
                         selected = random.choice(flows)
@@ -972,7 +893,7 @@ class DynamicEntity(Entity):
                     elif isinstance(self, Condition):
                         if self.function is not None:
                             # Perform a function script for selection
-                            selected = self.function(Entity)
+                            selected = self.function(entity_db)
                             selected_flows = [r for r in flows if r.end is selected]
                             Process.store_event(self, 'selects ' + ', '.join([r.end.name for r in selected_flows]))
                             for r in selected_flows:
@@ -1052,8 +973,8 @@ class Action(DynamicEntity):
     Action Dynamic Entity
     """
     def __init__(self, name, duration=1):
-        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         super().__init__(name, duration)
+        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
     ########################################################################
     # Class Creation Methods
@@ -1086,8 +1007,8 @@ class And(DynamicEntity):
     And Dynamic Entity
     """
     def __init__(self, name='and'):
-        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         super().__init__(name)
+        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
         # This decomposes a pair dynamic entity called 'end' or name+'_END'
         self.end = And_END(name + '_END')
@@ -1118,8 +1039,8 @@ class Or(DynamicEntity):
     Or Dynamic Entity
     """
     def __init__(self, name='or'):
-        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         super().__init__(name)
+        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
         # This decomposes a pair dynamic entity called 'end' or name+'_END'
         self.end = Or_END(name + '_END')
@@ -1151,8 +1072,8 @@ class Loop(DynamicEntity):
     """
 
     def __init__(self, name='loop', times=2):
-        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         super().__init__(name)
+        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
         # This decomposes a pair dynamic entity called 'end' or name+'_END'
         self.end = Loop_END(name + '_END', times=times)
@@ -1196,8 +1117,8 @@ class Condition(DynamicEntity):
     """
 
     def __init__(self, name):
-        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         super().__init__(name)
+        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
         # This decomposes a pair dynamic entity called 'end' or name+'_END'
         self.end = Condition_END(name + '_END')
@@ -1232,8 +1153,8 @@ class END(DynamicEntity):
     """
 
     def __init__(self, name):
-        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         super().__init__(name)
+        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
     def reset(self):
         super().reset()
@@ -1264,13 +1185,12 @@ class Process(DynamicEntity):
     event_queue = queue.Queue()
 
     def __init__(self, name):
+        super().__init__(name)
         # Find a module which is using this class
         # and set the caller's path to this class, so we can know where this object came form:
         # - last element ([-1]) is me, the one before ([-2]) is my caller.
         # - The first element in caller's data is the filename
         self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
-
-        super().__init__(name)
 
         self.is_root = True
 
@@ -1294,7 +1214,7 @@ class Process(DynamicEntity):
         """
         This checks interfaces between functions (or actions)
         """
-        from interfaceanalyzer import InterfaceAnalyzer as IA
+        from interface_analyzer import InterfaceAnalyzer as IA
         ia = IA(self)
         return ia.get_critical_elements(self), \
                ia.get_sphere_of_influence(self), \
@@ -1315,7 +1235,7 @@ class Process(DynamicEntity):
             e.check_property()
 
     def get_action_times(self):
-        actions = Process.get_by_type(Action)
+        actions = entity_db.get_by_type(Action)
         dict_action = {x.name:x.total_time for x in actions}
         return dict_action
 
@@ -1519,3 +1439,4 @@ class Process(DynamicEntity):
 class Process_END(DynamicEntity):
     def __init__(self, name):
         super().__init__(name)
+

@@ -1,11 +1,11 @@
 from entity import *
 from script_generator import ScriptGenerator
 
-import AD5_Item_Flow_Test_2
+import examples.ActionModels.AD5_Item_Flow_Test_2 as ad5
 
 #########################################################
 
 sg = ScriptGenerator()
-sg.run(AD5_Item_Flow_Test_2)
+sg.run(ad5)
 
 print(sg.script)

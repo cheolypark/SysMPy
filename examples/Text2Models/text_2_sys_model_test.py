@@ -1,5 +1,6 @@
 from entity import *
 from script_to_model import SystemModelExtractor
+from model_generator import ModelGenerator
 
 """
                 +---------------+
@@ -40,21 +41,22 @@ text = """SAI should automatically optimize the box arrangement"""
 # text = "Autonomous cars shift insurance liability toward manufacturers"
 # txt = 'I do not know with whom I will go to the prom.'
 sp = SystemModelExtractor(text)
-sp.print()
-print(sp.run())
+# sp.print()
+model_info = sp.run()
+print(model_info)
+
+mg = ModelGenerator()
+req = mg.to_requirement(model_info)
+print(req)
+
+import pathlib
+print(pathlib.Path().absolute())
+print(pathlib.Path(__file__).parent.absolute())
+
+p = Process("process")
 
 
-# 1 Define actions
-# p = Process("process")
-# act1 = p.Action("Action1")
-# act2 = p.Action("Action2")
-# act3 = p.Action("Action3")
-#hi
-# ###############################################
-# # 2 run simulation
-# # Entity._debug_mode = True
-# asyncio.run(p.sim())
-#
-# print(p.get_action_times())
+req = Requirement('sys')
 
-
+# en = entity_database.get('sys')
+# print(en)

@@ -1,4 +1,5 @@
 from entity import *
+
 """
 +---------------------------------------------------------------------------+
 R1.0 The system shall fit into a volume not exceeding 1.0 m^3
@@ -24,30 +25,29 @@ R4.0 The mass of the system shall not exceed 2,700 kg
 # 1 Define requirements
 r_sys = Requirement('System Requirement')
 r_size = r_sys.Requirement('System Size',
-                 des="The system shall fit into a volume not exceeding 1.0 m^3",
-                 range = [1, 2, 3, 4],
-                 unit="m^3")
+                           des="The system shall fit into a volume not exceeding 1.0 m^3",
+                           range=[1, 2, 3, 4],
+                           unit="m^3")
 
 r1_1 = r_size.Requirement('System Width',
-                       des="The system width shall be between 0.5m and 1.0m",
-                       range = [1, 2, 3, 4],
-                       unit="m" )
+                          des="The system width shall be between 0.5m and 1.0m",
+                          range=[1, 2, 3, 4],
+                          unit="m")
 
 r2 = r_sys.Requirement('System Material',
-                 des="The system shall be made entirely from Aluminum 6060 alloy",
-                 type="alloy")
+                       des="The system shall be made entirely from Aluminum 6060 alloy",
+                       type="alloy")
 
 r2_1 = r2.Requirement('System Material Constraint',
                       des="The system shall not contain any internal voids or cavities")
 
 r3 = r_sys.Requirement('System Shape',
-                  des="The shape of the system must be a cube",
-                  type="cube")
+                       des="The shape of the system must be a cube",
+                       type="cube")
 
 r4 = r_sys.Requirement('System Weight',
-                 des="The mass of the system shall not exceed 2,700 kg",
-                 range = [2600, 2700],
-                 unit="kg"
-                 )
+                       des="The mass of the system shall not exceed 2,700 kg",
+                       range=[2600, 2700],
+                       unit="kg")
 
 print(r_sys)

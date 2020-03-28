@@ -1,5 +1,6 @@
-from sysmpy.entity import *
-from sysmpy.relationship import *
+# from sysmpy.entity import *
+from entity import *
+from relationship import *
 import sys, inspect
 
 
@@ -73,7 +74,6 @@ class ScriptGenerator():
                 for trigger in triggers:
                     trigger_id = f'ID{id(trigger)}'
                     self.script_item += f'{trigger_id}.triggered({eid})\n'
-
 
         # for all children
         if 'contains' in entity.relation:
