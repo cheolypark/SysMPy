@@ -1,5 +1,5 @@
-from entity import *
-from relationship import *
+from sysmpy.entity import *
+from sysmpy.relationship import *
 import sys, inspect
 
 
@@ -21,3 +21,20 @@ class ModelGenerator():
             req = Requirement(system, des=text)
 
         return req
+
+    def to_action_model_op(self, model_info, parent=None):
+        p, a, i = None, None, None
+        for k, v in model_info.items():
+            v = str(v)
+            if k == 'WHO':
+                p = Process(v)
+            elif k == 'VERB':
+                a = p.Action(v)
+            elif k == 'WHAT':
+                a.name += ' ' + v
+
+        return p
+
+    def to_action_model(self, model_info, parent=None):
+        p = self.to_action_model_op(model_info, parent)
+        return p

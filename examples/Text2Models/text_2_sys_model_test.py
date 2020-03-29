@@ -1,35 +1,8 @@
-from entity import *
+from sysmpy.entity import *
 from script_to_model import SystemModelExtractor
 from model_generator import ModelGenerator
+from script_generator import ScriptGenerator
 
-"""
-                +---------------+
-                |               |
-                |     start     |
-                |               |
-                +---------------+
-                        | process
-                        |
-                +---------------+
-                |               |
-                |     Action1   |
-                |               |        
-                +---------------+        
-                        |
-                        |
-                +---------------+
-                |               |
-                |     Action2   |
-                |               |        
-                +---------------+        
-                        |
-                        | 
-                +---------------+
-                |               |
-                |      End      |
-                |               |
-                +---------------+
-"""
 print('text to system models')
 
 text = """
@@ -40,23 +13,23 @@ text = """SAI should automatically optimize the box arrangement"""
 
 # text = "Autonomous cars shift insurance liability toward manufacturers"
 # txt = 'I do not know with whom I will go to the prom.'
+
+# 1. Perform SystemModelExtractor
 sp = SystemModelExtractor(text)
-# sp.print()
 model_info = sp.run()
 print(model_info)
 
+# 2. Perform ModelGenerator for requirement
 mg = ModelGenerator()
 req = mg.to_requirement(model_info)
 print(req)
 
-import pathlib
-print(pathlib.Path().absolute())
-print(pathlib.Path(__file__).parent.absolute())
+# 3. Perform ModelGenerator for action model
+am = mg.to_action_model(model_info)
+print(am)
 
-p = Process("process")
+# 4. covert the action model in the memory to an action model script
+sg = ScriptGenerator()
+script = sg.run(am)
+print(script)
 
-
-req = Requirement('sys')
-
-# en = entity_database.get('sys')
-# print(en)

@@ -5,12 +5,17 @@ from collections import defaultdict
 import re
 import os
 import nbformat
-
+import os.path
+import warnings
 
 class SMS2Texts():
     def __init__(self, base_dir):
         self.base_dir = base_dir
         self.texts = []
+
+        isdir = os.path.isdir(base_dir)
+        if isdir is False:
+            warnings.simplefilter(f'The directory {base_dir} does not exist!')
 
     def take_only_quotation_mark(self, data):
         quotes = re.findall(r'"[^"]*"', data, re.U)

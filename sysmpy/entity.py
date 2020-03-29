@@ -1,5 +1,5 @@
 import asyncio
-from relationship import *
+from sysmpy.relationship import *
 import random
 import queue
 import traceback
@@ -956,7 +956,6 @@ class DynamicEntity(Entity):
 
                     # Save proper simulation results
                     proc = self.get_pairs_inv()
-                    proc.save_simulation_results()
 
                     if Process.global_max is None:
                         Process.store_event(self, 'deactivating root process now', info='')
@@ -1231,7 +1230,7 @@ class Process(DynamicEntity):
 
         entity_results, relation_results = self.search(class_search=[Requirement])
         for e in entity_results:
-            print(e)
+            # print(e)
             e.check_property()
 
     def get_action_times(self):
@@ -1290,13 +1289,6 @@ class Process(DynamicEntity):
             return None
         return Process.event_queue.get_nowait()
 
-    def save_simulation_results(self):
-        # self.print_flows(self.sim_network)
-
-        # 네트워크 서치로 프로퍼티와 관련 요구사항 리스트를 추출하는 것이 필요!!!
-        # print(self)
-        pass
-
     async def sim(self, until=5):
         """
         This triggers the simulation.
@@ -1334,7 +1326,7 @@ class Process(DynamicEntity):
 
             workers = [x.run() for x in self.sim_network]
             workers.append(self.run())
-            # await asyncio.gather(*self.workers)
+
             try:
                 res = await asyncio.gather(*workers)
                 print('--------- Simulation Completed ---------')

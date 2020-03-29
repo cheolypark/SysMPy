@@ -1,6 +1,6 @@
 import traceback
 import os
-from util import *
+from sysmpy.util import *
 
 entity_database = []
 

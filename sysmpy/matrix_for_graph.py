@@ -1,5 +1,5 @@
 import numpy as np
-from entity import *
+from sysmpy.entity import *
 from operator import add
 
 
