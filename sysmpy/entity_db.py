@@ -2,17 +2,41 @@ import traceback
 import os
 from util import *
 
-__entity_database = []
+entity_database = []
 
 def store_entity(self):
     """ All entities created are stored """
-    __entity_database.append(self)
+    entity_database.append(self)
 
 def remove_entity(self):
-    __entity_database.remove(self)
+    # Remove the self from the entity which is using the self
+    for name, inv_relations in self.inv_relation.items():
+        for rel in inv_relations:
+            rel_oposites = rel.start.relation[rel.re_name]
+            remove_list = []
+            for rel_oposite in rel_oposites:
+                if self == rel_oposite.end:
+                    remove_list.append(rel_oposite)
+
+            for r in remove_list:
+                rel_oposites.remove(r)
+
+    # Remove the self from the entity which is used by the self
+    for name, relations in self.relation.items():
+        for rel in relations:
+            rel_oposites = rel.end.inv_relation[rel.inv_name]
+            remove_list = []
+            for rel_oposite in rel_oposites:
+                if self == rel_oposite.start:
+                    remove_list.append(rel_oposite)
+
+            for r in remove_list:
+                rel_oposites.remove(r)
+
+    entity_database.remove(self)
 
 def clear_all():
-    __entity_database.clear()
+    entity_database.clear()
 
 def get(name_entity, path=None, comparing_method=None):
     """This returns instances of an entity
@@ -85,11 +109,11 @@ def get_op(comparing_method, target, caller=None):
     """ This returns instances of an entity by searching in the entity_db"""
     if comparing_method is None:
         if caller is None:
-            e = [x for x in __entity_database if x.name == target]
+            e = [x for x in entity_database if x.name == target]
         elif caller is not None:
-            e = [x for x in __entity_database if x.name == target and is_path_same(caller, x.module)]
+            e = [x for x in entity_database if x.name == target and is_path_same(caller, x.module)]
     elif comparing_method == 'ByID':
-        e = [x for x in __entity_database if f'ID{id(x)}' == target]
+        e = [x for x in entity_database if f'ID{id(x)}' == target]
 
     if e is None:
         return None
@@ -100,7 +124,7 @@ def get_op(comparing_method, target, caller=None):
 
 def get_by_type(type_entity):
     """ This returns instances of an entity by the entity type"""
-    e = [x for x in __entity_database if isinstance(x, type_entity)]
+    e = [x for x in entity_database if isinstance(x, type_entity)]
     if e is None:
         return None
     else:
