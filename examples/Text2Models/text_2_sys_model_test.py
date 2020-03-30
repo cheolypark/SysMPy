@@ -5,14 +5,7 @@ from script_generator import ScriptGenerator
 
 print('text to system models')
 
-text = """
-When constructing an architectural model, SAI should automatically optimize the spatial arrangement of the boxes and lines that make up the model in the modeling window by pressing the 'Model Space Optimization Button' to improve readability.
-"""
-
-text = """SAI should automatically optimize the box arrangement"""
-
-# text = "Autonomous cars shift insurance liability toward manufacturers"
-# txt = 'I do not know with whom I will go to the prom.'
+text = "System should automatically optimize the spatial arrangement of the boxes."
 
 # 1. Perform SystemModelExtractor
 sp = SystemModelExtractor(text)
@@ -32,4 +25,3 @@ print(am)
 sg = ScriptGenerator()
 script = sg.run(am)
 print(script)
-

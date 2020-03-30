@@ -39,8 +39,9 @@ def show(p, width=960, height=750, diagram='AD', type=Action):
     graph = GuiMXGraphActionDiagram().get_mxgraph(p)
     # print(graph)
     src = "http://www.sysmpy.org/view/?g=" + graph
+    # src = "http://127.0.0.1:8000/view/?g=" + graph
     # parsed_html = urllib.parse.quote(src, safe="~@#$&()*!+=:;,.?/\'")
-    # print(parsed_html)
+    # print(src)
 
     # parsed_html = urllib.parse.quote(view_html, safe="~@#$&()*!+=:;,.?/\'")
     iframe = f"""

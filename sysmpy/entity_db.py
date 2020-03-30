@@ -102,6 +102,8 @@ def get_by_relationship(obj_parent, name_target, relationship):
                 return None
             elif len(e) == 1:
                 return e[0]
+            elif len(e) == 0:
+                return None
             else:
                 return e
 
@@ -119,6 +121,8 @@ def get_op(comparing_method, target, caller=None):
         return None
     elif len(e) == 1:
         return e[0]
+    elif len(e) == 0:
+        return None
     else:
         return e
 

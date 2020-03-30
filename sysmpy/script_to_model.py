@@ -36,30 +36,43 @@ class spacy_doc():
 class SystemModelExtractor(spacy_doc):
     def __init__(self, txt):
         super().__init__(txt)
-        self.model_info = {}
+        self.info = {}
 
     def extract(self, token):
         lemma, pos, tag, dep = token.lemma_, token.pos_, token.tag_, token.dep_
-        head = token.head
-        h_lemma, h_pos, h_tag, h_dep = head.lemma_, head.pos_, head.tag_, head.dep_
+        parent = token.head
+        p_lemma, p_pos, p_tag, p_dep = parent.lemma_, parent.pos_, parent.tag_, parent.dep_
 
-        if (pos == 'NOUN' and tag == 'NNS' and dep == 'nsubj') or \
+        if (pos == 'NOUN' and tag == 'NN' and dep == 'nsubj') or \
+           (pos == 'NOUN' and tag == 'NNS' and dep == 'nsubj') or \
            (pos == 'PROPN' and tag == 'NNP' and dep == 'nsubj') :
-            self.model_info['WHO'] = token
+            self.info['WHO'] = token
         elif (pos == 'VERB' and tag == 'VBP' and dep == 'ROOT') or \
              (pos == 'VERB' and tag == 'VB' and dep == 'ROOT'):
-            self.model_info['VERB'] = token
-        elif pos == 'NOUN' and tag == 'NN' and dep == 'dobj':
-            self.model_info['WHAT'] = token
-        elif pos == 'NOUN' and tag == 'NNS' and dep == 'pobj' and (h_lemma == 'toward' or h_lemma == 'to'):
-            self.model_info['TOWHAT'] = token
+            self.info['VERB'] = token
+        elif (pos == 'AUX' and tag == 'VB' and dep == 'ROOT') :
+            self.info['VHAVE'] = token
+        elif (pos == 'NOUN' and tag == 'NN' and dep == 'dobj') or \
+             (pos == 'NOUN' and tag == 'NNS' and dep == 'dobj') or \
+             (pos == 'NOUN' and tag == 'NNP' and dep == 'dobj') :
+            self.info['WHAT'] = token
+        elif (p_lemma == 'toward' or p_lemma == 'to') and \
+             ((pos == 'NOUN' and tag == 'NN' and dep == 'pobj') or \
+              (pos == 'NOUN' and tag == 'NNS' and dep == 'pobj') or \
+              (pos == 'NOUN' and tag == 'NNP' and dep == 'pobj')) :
+            self.info['TOWHAT'] = token
+        elif (p_lemma == 'at') and \
+             ((pos == 'NOUN' and tag == 'NN' and dep == 'pobj') or \
+              (pos == 'NOUN' and tag == 'NNS' and dep == 'pobj') or \
+              (pos == 'NOUN' and tag == 'NNP' and dep == 'pobj')) :
+            self.info['WHERE'] = token
 
     def token_to_chunk(self, chunk):
-        for k, v in self.model_info.items():
+        for k, v in self.info.items():
             # print(id(chunk.root), id(v))
             if isinstance(v, Token):
                 if chunk.root == v:
-                    self.model_info[k] = chunk
+                    self.info[k] = chunk
 
     def run(self, width=6):
         # Extract basic information about 5W1H
@@ -70,7 +83,7 @@ class SystemModelExtractor(spacy_doc):
         for chunk in self.doc.noun_chunks:
             self.token_to_chunk(chunk)
 
-        return self.model_info
+        return self.info
 
 
 # txt = "Autonomous cars shift insurance liability toward manufacturers"
