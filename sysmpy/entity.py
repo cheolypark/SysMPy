@@ -4,6 +4,7 @@ import random
 import queue
 import traceback
 import os
+from copy import deepcopy
 import sysmpy.entity_db as entity_db
 
 
@@ -418,8 +419,19 @@ class DynamicEntity(Entity):
         self.function = None
         self.sim_network = []
 
-    def reset(self):
+    def reset_waiting(self):
         self.waiting = False
+
+    def reset_sim_status(self):
+        self.waiting = False
+        self.time = 0
+        self.total_time = 0
+        self.is_root = False
+
+        for rels in self.relation:
+            rel = self.relation[rels]
+            for r in rel:
+                r.reset_sim_status()
 
     ########################################################################
     # Relationship Methods
@@ -508,17 +520,47 @@ class DynamicEntity(Entity):
     # Simulation Methods
     #
     #
+    def make_network(self):
+        """
+        This create a simulation network containing flows between nodes
+        :return:
+        """
+
+        # Make a new entity corresponding to this entity
+        # After using the new entity, it will be removed.
+        new_en = deepcopy(self)
+
+        new_en.init_sim_network_op(new_en.sim_network)
+
+        return new_en
+
     def init_sim_network(self):
         """
         This create a simulation network containing flows between nodes
         :return:
         """
-        if len(self.sim_network) == 0:
-            self.init_sim_network_op(self.sim_network)
+        # Make a network for the action model
+        new_en = self.make_network()
 
-        for en in self.sim_network:
-            en.time = 0
-            en.total_time = 0
+        # Reset all states in the elements of the network
+        for en in new_en.sim_network:
+            en.reset_sim_status()
+
+        new_en.reset_sim_status()
+
+        # The function sim is called, which means this is a root process
+        new_en.is_root = True
+        new_en.end.is_root = True
+
+        # The root process is linked to 'process_END' using the relation 'flow'
+        # 'process_END' -> 'process'
+        new_en.end.flow(new_en)
+
+        # For the relation 'process_END' -> 'process', set 'sent = true' to activate the root process
+        flowed_from = [r for r in new_en.inv_relation['flowed from'] if isinstance(r, Flow)]
+        flowed_from[0].sent = True
+
+        return new_en
 
     def init_sim_network_op(self, entities):
         """
@@ -627,7 +669,6 @@ class DynamicEntity(Entity):
         while Process.activated:
             # Info is used to store any information in this process and be printed out by 'Process.store_event()'
             info = ''
-
             ##################################################################################
             #
             #       Phase 1: Check Activating Conditions
@@ -803,6 +844,7 @@ class DynamicEntity(Entity):
             #       Phase 2: Perform Action
             #
             ##################################################################################
+
             if b_flow_fire and b_seizes_fire and b_consumes_fire and b_triggered_fire:
 
                 ########################################################################
@@ -908,7 +950,7 @@ class DynamicEntity(Entity):
 
                         if self.count >= self.times-1 or len(exit_loop) > 0:
                             Process.store_event(self, 'finished repetition')
-                            self.reset()
+                            self.reset_waiting()
                             loops = [x for x in self.relation['flows'] if not isinstance(x.end, Loop)]
                             for x in loops:
                                 x.sent = True
@@ -920,7 +962,7 @@ class DynamicEntity(Entity):
                                 x.sent = True
 
                     elif isinstance(self, Process_END) and self.is_root:
-                        self.reset()
+                        self.reset_waiting()
                         for x in flows:
                             x.sent = True
                     else:
@@ -1105,8 +1147,8 @@ class Loop_END(DynamicEntity):
         self.times = times
         self.count = 0
 
-    def reset(self):
-        super().reset()
+    def reset_waiting(self):
+        super().reset_waiting()
         self.count = 0
 
 
@@ -1142,8 +1184,8 @@ class Condition_END(DynamicEntity):
     def __init__(self, name):
         super().__init__(name)
 
-    def reset(self):
-        super().reset()
+    def reset_waiting(self):
+        super().reset_waiting()
 
 
 class END(DynamicEntity):
@@ -1155,16 +1197,16 @@ class END(DynamicEntity):
         super().__init__(name)
         self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
-    def reset(self):
-        super().reset()
+    def reset_waiting(self):
+        super().reset_waiting()
 
 
 class ExitLoop(DynamicEntity):
     def __init__(self, name):
         super().__init__(name)
 
-    def reset(self):
-        super().reset()
+    def reset_waiting(self):
+        super().reset_waiting()
 
 
 class Process(DynamicEntity):
@@ -1298,18 +1340,6 @@ class Process(DynamicEntity):
         If until is None, the simulation performs just one time.
         """
 
-        # The function sim is called, which means this is a root process
-        self.is_root = True
-        self.end.is_root = True
-
-        # The root process is linked to 'process_END' using the relation 'flow'
-        # 'process_END' -> 'process'
-        self.end.flow(self)
-
-        # For the relation 'process_END' -> 'process', set 'sent = true' to activate the root process
-        flowed_from = [r for r in self.inv_relation['flowed from'] if isinstance(r, Flow)]
-        flowed_from[0].sent = True
-
         # Find other flows and set them into asyncio
         if 'flows' or 'contains' in self.relation:
             # Reset all global variables regarding simulation
@@ -1319,20 +1349,23 @@ class Process(DynamicEntity):
             Process.global_max = until
 
             # get flows from the relation 'flow' or 'contains'
-            self.init_sim_network()
+            new_en = self.init_sim_network()
 
             # print out control flows of UC
             # self.print_flows(self.sim_network)
 
-            workers = [x.run() for x in self.sim_network]
-            workers.append(self.run())
+            workers = [x.run() for x in new_en.sim_network]
+            workers.append(new_en.run())
 
             try:
                 res = await asyncio.gather(*workers)
                 print('--------- Simulation Completed ---------')
+
+                del new_en
+
             except asyncio.CancelledError:
                 print('CancelledError')
-                res = None
+
 
     ########################################################################
     # Class Creation Methods

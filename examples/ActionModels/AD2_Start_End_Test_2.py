@@ -43,6 +43,11 @@ act3 = p.Action("Action3")
 # Entity._debug_mode = True
 asyncio.run(p.sim())
 
-print(p.get_action_times())
+# from sysmpy.gui import *
+# graph = GuiMXGraphActionDiagram().get_mxgraph(p)
+#
+# asyncio.run(p.sim())
+#
+# asyncio.run(p.sim())
 
 

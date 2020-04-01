@@ -29,6 +29,9 @@ class Relationship:
             end.inv_relation[inv_name] = rel
             rel.append(self)
 
+    def reset_sim_status(self):
+        pass
+
     def __str__(self):
         s = '[{}] {} [{}]'.format(self.start.name, self.re_name, self.end.name)
         return s
@@ -43,6 +46,9 @@ class Flow(Relationship):
         super().__init__('flows', 'flowed from', start, end)
         self.sent = False
 
+    def reset_sim_status(self):
+        super().reset_sim_status()
+        self.sent = False
 
 class Sends(Relationship):
     """
@@ -52,6 +58,10 @@ class Sends(Relationship):
     def __init__(self, start, end, size=10):
         super().__init__('sends', 'sent from', start, end)
         self.size = size
+        self.trigger = False
+
+    def reset_sim_status(self):
+        super().reset_sim_status()
         self.trigger = False
 
 
@@ -73,6 +83,9 @@ class Triggered(Relationship):
         super().__init__('triggered by', 'triggers', start, end)
         self.trigger = False
 
+    def reset_sim_status(self):
+        super().reset_sim_status()
+        self.trigger = False
 
 class Produces(Relationship):
     """
@@ -81,7 +94,12 @@ class Produces(Relationship):
     """
     def __init__(self, start, end, amount=10):
         super().__init__('produces', 'produced by', start, end)
-        self.amount = amount
+        self.default_amount = amount
+        self.amount = self.default_amount
+
+    def reset_sim_status(self):
+        super().reset_sim_status()
+        self.amount = self.default_amount
 
 
 class Seizes(Relationship):
@@ -91,8 +109,12 @@ class Seizes(Relationship):
     """
     def __init__(self, start, end, amount=10):
         super().__init__('seizes', 'seized by', start, end)
-        self.amount = amount
+        self.default_amount = amount
+        self.amount = self.default_amount
 
+    def reset_sim_status(self):
+        super().reset_sim_status()
+        self.amount = self.default_amount
 
 class Consumes(Relationship):
     """
@@ -101,7 +123,12 @@ class Consumes(Relationship):
     """
     def __init__(self, start, end, amount=10):
         super().__init__('consumes', 'consumed by', start, end)
-        self.amount = amount
+        self.default_amount = amount
+        self.amount = self.default_amount
+
+    def reset_sim_status(self):
+        super().reset_sim_status()
+        self.amount = self.default_amount
 
 
 class Decomposes(Relationship):
@@ -170,7 +197,6 @@ class Relates(Relationship):
 
 
 # Relationship for static entity
-
 
 class Transfers(Relationship):
     """

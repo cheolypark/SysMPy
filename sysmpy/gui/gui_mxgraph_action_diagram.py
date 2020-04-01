@@ -308,25 +308,24 @@ class GuiMXGraphActionDiagram(GuiMXGraph):
         return pre_edge_x, pre_edge_y
 
     def get_mxgraph(self, proc_en):
+        # get flows from the relation 'flow' or 'contains'
+        new_en = proc_en.make_network()
 
-        proc_en.numbering('A')
+        new_en.numbering('A')
 
         # Set this with a root process flag
-        proc_en.is_root = True
-        proc_en.end.is_root = True
-
-        # get flows from the relation 'flow' or 'contains'
-        proc_en.init_sim_network()
+        new_en.is_root = True
+        new_en.end.is_root = True
 
         # 1. Find size and root_x of nodes
-        self.find_size_and_root_x(proc_en, None)
+        self.find_size_and_root_x(new_en, None)
 
         # 2. Find center_x and center_y for dynamic entity (e.g., Process, Action, and Condition)
         list_actions = [] # This is used for item positioning
-        self.find_center(proc_en, None, 0, 0, list_actions)
+        self.find_center(new_en, None, 0, 0, list_actions)
 
         self.mx_nodes = []
-        str = self.get_mxgraph_string(proc_en, proc_en.sim_network, list_actions)
+        str = self.get_mxgraph_string(new_en, new_en.sim_network, list_actions)
 
         # print out control flows of UC
         return str
