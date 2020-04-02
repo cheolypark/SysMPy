@@ -6,6 +6,7 @@ import traceback
 import os
 from copy import deepcopy
 import sysmpy.entity_db as entity_db
+from sysmpy.util import *
 
 
 class Entity():
@@ -530,7 +531,7 @@ class DynamicEntity(Entity):
         # After using the new entity, it will be removed.
         new_en = deepcopy(self)
 
-        new_en.init_sim_network_op(new_en.sim_network)
+        new_en.make_network_op(new_en.sim_network)
 
         return new_en
 
@@ -562,7 +563,7 @@ class DynamicEntity(Entity):
 
         return new_en
 
-    def init_sim_network_op(self, entities):
+    def make_network_op(self, entities):
         """
         This finds all node flows
         The returning list acts will have flow nodes which are activated by Python Asyncio
@@ -605,7 +606,7 @@ class DynamicEntity(Entity):
 
                     # If this entity does not allow the decomposition, don't make any sub-flows for simulation
                     if e.sim_with_decomposition:
-                        e.init_sim_network_op(entities)
+                        e.make_network_op(entities)
 
                     # If this entity is Action and the current child is Process,
                     # this means this is a decomposed entity
@@ -928,15 +929,24 @@ class DynamicEntity(Entity):
                             # Perform a function script for selection
                             selected = self.function(entity_db)
 
-                    if isinstance(self, Or):
+                    if isinstance(self, XOr): # Select only one process
                         selected = random.choice(flows)
                         Process.store_event(self, 'selects ' + selected.end.name)
                         selected.sent = True
+                    if isinstance(self, Or): # Select at least one process
+                        or_flows = or_selector(flows)
+                        selected = random.choice(or_flows)
+                        for sel in selected:
+                            if sel is not None:
+                                Process.store_event(self, 'selects ' + sel.end.name)
+                                sel.sent = True
                     elif isinstance(self, Condition):
                         if self.function is not None:
                             # Perform a function script for selection
                             selected = self.function(entity_db)
-                            selected_flows = [r for r in flows if r.end is selected]
+                            # Because 'selected' is the original process in db and r.end is a copied process,
+                            # entity_db.is_same() is used to check their same identity.
+                            selected_flows = [r for r in flows if entity_db.is_same(r.end, selected)]
                             Process.store_event(self, 'selects ' + ', '.join([r.end.name for r in selected_flows]))
                             for r in selected_flows:
                                 r.sent = True
@@ -966,6 +976,7 @@ class DynamicEntity(Entity):
                         for x in flows:
                             x.sent = True
                     else:
+                        # 'And' or other entities will send all flows to their child entities.
                         for x in flows:
                             x.sent = True
 
@@ -1107,24 +1118,20 @@ class Or_END(DynamicEntity):
         super().__init__(name)
 
 
-class Loop(DynamicEntity):
+class XOr(DynamicEntity):
     """
-    Loop Dynamic Entity
+    XOr Dynamic Entity
     """
 
-    def __init__(self, name='loop', times=2):
+    def __init__(self, name='xor'):
         super().__init__(name)
         self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
         # This decomposes a pair dynamic entity called 'end' or name+'_END'
-        self.end = Loop_END(name + '_END', times=times)
+        self.end = XOr_END(name + '_END')
 
         # Link this and the end using the relation 'Pairs'
         Pairs(self, self.end)
-
-        # 'loop' is linked to 'loop_END' using the relation 'flow'
-        # 'loop_END' -> 'loop'
-        self.end.flow(self)
 
     ########################################################################
     # Class Creation Methods
@@ -1138,18 +1145,9 @@ class Loop(DynamicEntity):
         Contains(self, obj)
         return obj
 
-
-class Loop_END(DynamicEntity):
-    def __init__(self, name, times):
+class XOr_END(DynamicEntity):
+    def __init__(self, name):
         super().__init__(name)
-
-        # 'loop_END' is set with the looping times
-        self.times = times
-        self.count = 0
-
-    def reset_waiting(self):
-        super().reset_waiting()
-        self.count = 0
 
 
 class Condition(DynamicEntity):
@@ -1233,19 +1231,21 @@ class Process(DynamicEntity):
         # - The first element in caller's data is the filename
         self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
-        self.is_root = True
+        # Loop can inherit process. And a pure process uses the following codes.
+        if isinstance(self, Loop) is False:
+            self.is_root = True
 
-        # This decomposes a pair dynamic entity called 'end' or name+'_END'
-        self.end = Process_END(name + '_END')
+            # This decomposes a pair dynamic entity called 'end' or name+'_END'
+            self.end = Process_END(name + '_END')
 
-        # Link this and the end using the relation 'Pairs'
-        Pairs(self, self.end)
+            # Link this and the end using the relation 'Pairs'
+            Pairs(self, self.end)
 
-        # AsyncIO workers are used to be performed as computing threads
-        self.workers = []
+            # AsyncIO workers are used to be performed as computing threads
+            self.workers = []
 
-        # sim_network is a network containing all processes, actions, and items associated with simulation
-        self.sim_network = []
+            # sim_network is a network containing all processes, actions, and items associated with simulation
+            self.sim_network = []
 
     ########################################################################
     # Analysis Methods
@@ -1411,14 +1411,22 @@ class Process(DynamicEntity):
 
         return obj
 
-    # def Process(self, name):
-    #     obj = Process(name)
-    #     Contains(self, obj)
-    #     Decomposes(self, obj)
-    #     return obj
+    def XOr(self, *args):
+        obj = XOr()
+        obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
-    def Loop(self, times=2):
-        obj = Loop(name='loop', times=times)
+        Contains(self, obj)
+
+        ret = []
+        if args is not None and len(args) > 0:
+            for proc in args:
+                ret.append(obj.Process(proc))
+            return tuple(ret)
+
+        return obj
+
+    def Loop(self, name, times=2):
+        obj = Loop(name=name, times=times)
         obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
         Contains(self, obj)
@@ -1465,3 +1473,47 @@ class Process_END(DynamicEntity):
     def __init__(self, name):
         super().__init__(name)
 
+
+class Loop(Process):
+    """
+    Loop Dynamic Entity
+    """
+
+    def __init__(self, name='loop', times=2):
+        super().__init__(name)
+        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+
+        # This decomposes a pair dynamic entity called 'end' or name+'_END'
+        self.end = Loop_END(name + '_END', times=times)
+
+        # Link this and the end using the relation 'Pairs'
+        Pairs(self, self.end)
+
+        # 'loop' is linked to 'loop_END' using the relation 'flow'
+        # 'loop_END' -> 'loop'
+        self.end.flow(self)
+
+    ########################################################################
+    # Class Creation Methods
+    # !start with an uppercase letter
+    #
+    def Process(self, name):
+        obj = Process(name)
+        obj.is_root = False
+        obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+
+        Contains(self, obj)
+        return obj
+
+
+class Loop_END(DynamicEntity):
+    def __init__(self, name, times=2):
+        super().__init__(name)
+
+        # 'loop_END' is set with the looping times
+        self.times = times
+        self.count = 0
+
+    def reset_waiting(self):
+        super().reset_waiting()
+        self.count = 0

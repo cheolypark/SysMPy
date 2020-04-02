@@ -50,8 +50,7 @@ print('AD10_Loop_Exit_Test')
 # 1 Define actions
 p = Process("process")
 
-loop = p.Loop()
-p_loop = loop.Process("process_loop")
+p_loop = p.Loop("process_loop")
 p_con = p_loop.Condition("Condition 1")
 
 p1 = p_con.Process("process 1")

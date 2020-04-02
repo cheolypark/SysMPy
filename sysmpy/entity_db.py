@@ -126,6 +126,7 @@ def get_op(comparing_method, target, caller=None):
     else:
         return e
 
+
 def get_by_type(type_entity):
     """ This returns instances of an entity by the entity type"""
     e = [x for x in entity_database if isinstance(x, type_entity)]
@@ -133,3 +134,13 @@ def get_by_type(type_entity):
         return None
     else:
         return e
+
+
+def is_same(e1, e2):
+    """
+    Elements in entity can be cloned by a simulation module or viewer module.
+    In some cases, their same identity should be checked.
+    """
+    if e1.name == e2.name and e1.module == e2.module:
+        return True
+    return False

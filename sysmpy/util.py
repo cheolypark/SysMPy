@@ -20,4 +20,43 @@ def is_path_same(path_base, path_target):
 
     return True
 
+
+def or_selector(elements):
+    cur_index = 0
+    cur_element = None
+    el_list = or_selector_tree(elements, cur_index, cur_element)
+
+    del el_list[-1]
+
+    for el in el_list:
+        del el[-1]
+
+    return el_list
+
+
+def or_selector_tree(elements, cur_index, cur_element):
+    if len(elements) == cur_index:
+        return_list = []
+        el_list = []
+        return_list.append(el_list)
+        el_list.append(cur_element)
+        return return_list
+
+    el_list1 = or_selector_tree(elements, cur_index + 1, elements[cur_index])
+    el_list2 = or_selector_tree(elements, cur_index + 1, None)
+
+    cur = cur_element
+
+    return_list = []
+    for el in el_list1:
+        el.append(cur)
+        return_list.append(el)
+    for el in el_list2:
+        el.append(cur)
+        return_list.append(el)
+
+    return return_list
+
+elements = ['1', '2', '3']
+or_selector(elements)
 # print(is_path_same('Projects.AD_Folder\\AD1', 'E:\\SW-SysMPy\\SysMPy\\examples\\Projects\\AD_Folder\\AD1'))

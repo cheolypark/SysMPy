@@ -39,8 +39,7 @@ print('AD6_Loop_Test_2')
 # 1 Define actions
 p = Process("process1")
 
-loop = p.Loop(times=2)
-p1_1 = loop.Process("process1_1")
+p1_1 = p.Loop("process1_1", times=2)
 
 l_act1 = p1_1.Action("Action1")
 

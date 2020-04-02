@@ -74,10 +74,12 @@ class GuiMXGraphActionDiagram(GuiMXGraph):
             label = ''
         if isinstance(en, Process_END):
             label = ''
-        elif isinstance(en, And):
+        elif isinstance(en, And) or isinstance(en, And_END):
             label = 'A'
-        elif isinstance(en, Or) or isinstance(en, Or_END) or isinstance(en, Condition_END) or isinstance(en, And_END):
+        elif isinstance(en, Or) or isinstance(en, Or_END) or isinstance(en, Condition_END):
             label = 'OR'
+        elif isinstance(en, XOr) or isinstance(en, XOr_END):
+            label = 'XO'
         elif isinstance(en, Loop) or isinstance(en, Loop_END):
             label = 'L'
 
@@ -124,7 +126,7 @@ class GuiMXGraphActionDiagram(GuiMXGraph):
             edge = f"var {s_name}_{e_name} = graph.insertEdge(parent, null, '', {s_name}, {e_name} ) /n "
 
         if point is not None:
-            edge += f'{s_name}_{e_name}.geometry.points = [new mxPoint( {point}, 0 )]/n'
+            edge += f'{s_name}_{e_name}.geometry.points = [new mxPoint({point}, 50)] /n '
         # e = graph.insertEdge(lane2a, null, 'No', step444, end3, 'verticalAlign=top');
         # e.geometry.points = [new mxPoint(step444.geometry.x + step444.geometry.width / 2,
         #                                  end3.geometry.y + end3.geometry.height / 2)];

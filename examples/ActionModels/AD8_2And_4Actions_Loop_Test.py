@@ -48,9 +48,8 @@ p2 = p_and.Process("process 2")
 p_act1 = p1.Action("Action 1")
 p_act2 = p1.Action("Action 2")
 
-loop = p2.Loop()
-p1_loop = loop.Process("process1_1")
-l_and = p1_loop.And()
+loop = p2.Loop('process1_1')
+l_and = loop.And()
 
 l_p1 = l_and.Process("proc3")
 l_p2 = l_and.Process("proc4")

@@ -10,40 +10,25 @@ from sysmpy.gui.gui_mxgraph_hierarchy_diagram import GuiMXGraphHierarchyDiagram
 import urllib
 
 
-def show2(p, width=960, height=750, diagram='AD', type=Action):
-    src = ''
+def show(p, width=960, height=750, diagram='AD', remote=True, type=Action):
 
     if diagram == 'AD':
-        src = "http://localhost:8080/AD/?g=" + GuiMXGraphActionDiagram().get_mxgraph(p)
+        graph = GuiMXGraphActionDiagram().get_mxgraph(p)
     elif diagram == 'BD':
-        src = "http://localhost:8080/BD/?g=" + GuiMXGraphBlockDiagram().get_mxgraph(p)
+        graph = GuiMXGraphBlockDiagram().get_mxgraph(p)
     elif diagram == 'HD':
-        src = "http://localhost:8080/HD/?g=" + GuiMXGraphHierarchyDiagram().get_mxgraph(p, type)
+        graph = GuiMXGraphHierarchyDiagram().get_mxgraph(p, type)
 
-    # parsed_html = urllib.parse.quote(view_html, safe="~@#$&()*!+=:;,.?/\'")
-    iframe = f"""
-           <iframe
-               width="{width}"
-               height="{height}"
-               src="{src}"
-               frameborder="0"
-               allowfullscreen
-           ></iframe>
-           """
-
-    display(HTML(iframe))
-
-
-def show(p, width=960, height=750, diagram='AD', type=Action):
-    src = ''
-    graph = GuiMXGraphActionDiagram().get_mxgraph(p)
     # print(graph)
-    src = "http://www.sysmpy.org/view/?g=" + graph
-    # src = "http://127.0.0.1:8000/view/?g=" + graph
+
+    if remote is True:
+        src = "http://www.sysmpy.org/view/?g=" + graph
+    else:
+        src = "http://127.0.0.1:8000/view/?g=" + graph
+
     # parsed_html = urllib.parse.quote(src, safe="~@#$&()*!+=:;,.?/\'")
     # print(src)
 
-    # parsed_html = urllib.parse.quote(view_html, safe="~@#$&()*!+=:;,.?/\'")
     iframe = f"""
            <iframe
                width="{width}"

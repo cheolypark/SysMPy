@@ -1,6 +1,7 @@
 import examples.ActionModels.AD2_Start_End_Test_2
 import examples.ActionModels.AD3_And_2Actions_Test
 import examples.ActionModels.AD4_Or_2Actions_Test
+import examples.ActionModels.AD4_XOr_2Actions_Test
 import examples.ActionModels.AD5_And_Actions_Items_Test
 import examples.ActionModels.AD5_Item_Flow_Test
 import examples.ActionModels.AD5_Item_Flow_Test_2
