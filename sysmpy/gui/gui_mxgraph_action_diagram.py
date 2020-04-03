@@ -56,7 +56,8 @@ class GuiMXGraphActionDiagram(GuiMXGraph):
             node_height = en.node_height
         elif isinstance(en, And) or isinstance(en, And_END) or isinstance(en, Condition_END) or \
                 isinstance(en, Loop) or isinstance(en, Loop_END) or \
-                isinstance(en, Or) or isinstance(en, Or_END):
+                isinstance(en, Or) or isinstance(en, Or_END) or \
+                isinstance(en, XOr) or isinstance(en, XOr_END):
             node_width = en.node_height
             node_height = en.node_height
         elif isinstance(en, Process) or isinstance(en, Process_END):
@@ -238,7 +239,7 @@ class GuiMXGraphActionDiagram(GuiMXGraph):
             entity.boundary_width = entity.width
             entity.boundary_height = entity.height
             entity.root_x = entity.boundary_width/2
-        elif isinstance(entity, And) or isinstance(entity, Condition) or isinstance(entity, Or):
+        elif isinstance(entity, And) or isinstance(entity, Condition) or isinstance(entity, Or) or isinstance(entity, XOr):
             entity.boundary_width = all_child_width
             entity.boundary_height = largest_child_height + (entity.height)*2 # itself and its End pair
             entity.root_x = (all_child_width - last_root_x - first_root_x)/2 + first_root_x
@@ -258,14 +259,14 @@ class GuiMXGraphActionDiagram(GuiMXGraph):
 
             entity.center_x = parent.center_x
             entity.center_y = pre_edge_y + entity.height_half
-        elif isinstance(entity, And) or isinstance(entity, Condition) or isinstance(entity, Or):
+        elif isinstance(entity, And) or isinstance(entity, Condition) or isinstance(entity, Or) or isinstance(entity, XOr):
             entity.center_x = parent.center_x
             entity.center_y = pre_edge_y + entity.height_half
         elif isinstance(entity, Loop):
             entity.center_x = parent.center_x
-            entity.center_y = pre_edge_y + entity.height_half#parent.center_y + entity.height
+            entity.center_y = pre_edge_y + entity.height_half #parent.center_y + entity.height
         elif isinstance(entity, Process):
-            if isinstance(parent, And) or isinstance(parent, Condition) or isinstance(parent, Or) or isinstance(parent, Loop):
+            if isinstance(parent, And) or isinstance(parent, Condition) or isinstance(parent, Or) or isinstance(parent, XOr) or isinstance(parent, Loop):
                 entity.center_x = parent.boundary_x + pre_edge_x + entity.root_x
             else:
                 entity.center_x = pre_edge_x + entity.root_x
@@ -298,7 +299,7 @@ class GuiMXGraphActionDiagram(GuiMXGraph):
         if 'pairs' in entity.relation:
             end_entity = entity.relation['pairs'][0].end
             end_entity.center_x = entity.center_x
-            if isinstance(parent, And) or isinstance(parent, Condition) or isinstance(parent, Or):
+            if isinstance(parent, And) or isinstance(parent, Condition) or isinstance(parent, Or) or isinstance(parent, XOr):
                 end_entity.center_y = parent.center_y + parent.boundary_height - parent.height - end_entity.height
             else:
                 end_entity.center_y = entity.center_y + entity.boundary_height - end_entity.height

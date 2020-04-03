@@ -580,7 +580,7 @@ class DynamicEntity(Entity):
                 last_e = []
                 for e in contains:
 
-                    if isinstance(self, And) or isinstance(self, Or) or isinstance(self, Condition):
+                    if isinstance(self, And) or isinstance(self, Or) or isinstance(self, XOr) or isinstance(self, Condition):
                         # If e is not 'or' or 'and', then make a parallel flow
                         self.flow(e)
                         last_e.append(e)
@@ -1144,6 +1144,7 @@ class XOr(DynamicEntity):
 
         Contains(self, obj)
         return obj
+
 
 class XOr_END(DynamicEntity):
     def __init__(self, name):
