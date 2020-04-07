@@ -10,6 +10,53 @@
    <!-- Loads and initializes the library -->
    <script type="text/javascript" src="../src/js/mxClient.js"></script>
 
+   <script type="text/javascript">
+   function delAction1()
+   {
+      var f = document.createElement("form");
+      f.setAttribute("charset", "UTF-8");
+      f.setAttribute("method", "get");
+      f.setAttribute("action", "/DM/"); //요청 보낼 주소
+
+      var evtF = document.createElement("input");
+      evtF.setAttribute("type", "hidden");
+      evtF.setAttribute("name", "evt");
+      evtF.setAttribute("value", "deleteItem");
+      f.appendChild(evtF);
+
+      dataF = document.createElement("input");
+      dataF.setAttribute("type", "hidden");
+      dataF.setAttribute("name", "data");
+      dataF.setAttribute("value", "신규액션1" );
+      f.appendChild(dataF);
+
+      document.body.appendChild(f);
+      f.submit();
+   }
+
+   function addAction2()
+   {
+      var f = document.createElement("form");
+      f.setAttribute("charset", "UTF-8");
+      f.setAttribute("method", "get");
+      f.setAttribute("action", "/DM/"); //요청 보낼 주소
+
+      var evtF = document.createElement("input");
+      evtF.setAttribute("type", "hidden");
+      evtF.setAttribute("name", "evt");
+      evtF.setAttribute("value", "addItem");
+      f.appendChild(evtF);
+
+      dataF = document.createElement("input");
+      dataF.setAttribute("type", "hidden");
+      dataF.setAttribute("name", "data");
+      dataF.setAttribute("value", "신규액션2" );
+      f.appendChild(dataF);
+
+      document.body.appendChild(f);
+      f.submit();
+   }
+   </script>
    <!-- Example code
    <script type="text/javascript">
       // Program starts here. Creates a sample graph in the
@@ -56,7 +103,10 @@
 
 <!-- Page passes the container for the graph to the program -->
 <body onload="main(document.getElementById('graphContainer'))">
-
+   <div id="btnDiv" style="overflow:hidden;">
+      <button onclick="delAction1()"  >Action1 del</button>
+      <button onclick="addAction2()"  >Action2 add</button>
+   </div>
    <!-- Creates a container for the graph with a grid wallpaper -->
    <div id="graphContainer" style="overflow:hidden;">
       <!--style="overflow:hidden;width:500px;height:2000px;background:url('editors/images/grid.gif')">-->

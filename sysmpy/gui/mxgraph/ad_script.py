@@ -32,6 +32,19 @@ mxGraph_start_nice_label = '''
                                 new mxRubberband(graph);
                                 new mxKeyHandler(graph);
                                 
+                                graph.getSelectionModel().addListener(mxEvent.CHANGE, function(sender, evt)
+                                {
+                                    var cell = graph.getSelectionCell();
+                                    console.log(cell);
+                                });
+
+                                document.getElementById('btnDiv').appendChild(mxUtils.button('View XML', function()
+                                {
+                                    var encoder = new mxCodec();
+                                    var node = encoder.encode(graph.getModel());
+                                    mxUtils.popup(mxUtils.getPrettyXml(node), true);
+                                }));
+
                                 ////////////////////////////////////////////////////////////////////////////                            
                                 // Do not allow removing labels from parents
                                 graph.graphHandler.removeCellsFromParent = false;
