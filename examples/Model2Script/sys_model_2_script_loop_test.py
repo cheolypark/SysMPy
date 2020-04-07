@@ -1,6 +1,5 @@
-from entity import *
+from sysmpy import *
 import asyncio
-from entity import *
 
 
 """
@@ -9,10 +8,10 @@ from entity import *
                             |     start     |
                             |               |
                             +---------------+
-                                    | process1
+                                    | process
                                     |
                                    (L)----------+
-                                    | process1_1|
+                                    | loop1     |
                             +---------------+   |
                             |               |   |
                             |    Action1    |   |
@@ -33,18 +32,8 @@ print('system models to scripts')
 ###############################################
 # 1 Define actions
 p = Process("process")
-
-p_and = p.And()
-
-p1 = p_and.Process("process 1")
-p2 = p_and.Process("process 2")
-p_act1 = p1.Action("Action 1")
-p_act2 = p1.Action("Action 2")
-
-loop = p2.Loop(times=2)
-p1_1 = loop.Process("process1_1")
-
-l_act3 = p1_1.Action("action 3")
+loop = p.Loop('loop1', times=2)
+l_act3 = loop.Action("Action1")
 
 
 ###############################################

@@ -1,4 +1,4 @@
-from entity import *
+from sysmpy import *
 from script_generator import ScriptGenerator
 
 
@@ -12,14 +12,14 @@ from script_generator import ScriptGenerator
                         |
                 +---------------+
                 |               |
-                |     Action1   |
+                |    Action1    |
                 |               |        
                 +---------------+        
                         |
                         |
                 +---------------+
                 |               |
-                |     Action2   |
+                |    Action2    |
                 |               |        
                 +---------------+        
                         |

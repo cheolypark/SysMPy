@@ -27,7 +27,7 @@ when:       by pressing the 'Model Space Optimization Button‘, when constructi
 
 from builtins import str
 
-from entity import *
+from sysmpy import *
 
 ###############################################
 # 1 Define requirements

@@ -1,4 +1,4 @@
-from sysmpy import Process
+from sysmpy import *
 import asyncio
 
 
@@ -12,14 +12,14 @@ import asyncio
                         |
                 +---------------+
                 |               |
-                |     Action1   |
+                |    Action1    |
                 |               |        
                 +---------------+        
                         |
                         |
                 +---------------+
                 |               |
-                |     Action2   |
+                |    Action2    |
                 |               |        
                 +---------------+        
                         |
@@ -37,6 +37,8 @@ p = Process("process")
 act1 = p.Action("Action1")
 act2 = p.Action("Action2")
 act3 = p.Action("Action3")
+
+
 
 ###############################################
 # 2 run simulation

@@ -1,4 +1,4 @@
-from entity import *
+from sysmpy import *
 from examples.Projects.AD_Folder.AD1 import *
 from examples.Projects.BD_Folder.BD1 import *
 

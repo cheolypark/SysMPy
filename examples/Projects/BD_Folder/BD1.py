@@ -1,4 +1,4 @@
-from entity import *
+from sysmpy import *
 
 # 1 Define actions
 p_1 = Process("process")

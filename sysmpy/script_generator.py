@@ -35,9 +35,7 @@ class ScriptGenerator():
         else:
             parent = ''
 
-        if isinstance(entity, Process):
-            self.script += f'{eid} = {parent}Process(\'{name}\')\n'
-        elif isinstance(entity, Action):
+        if isinstance(entity, Action):
             self.script += f'{eid} = {parent}Action(\'{name}\')\n'
         elif isinstance(entity, Or):
             self.script += f'{eid} = {parent}Or()\n'
@@ -50,7 +48,9 @@ class ScriptGenerator():
         elif isinstance(entity, Condition):
             self.script += f'{eid} = {parent}Condition(\'{name}\')\n'
         elif isinstance(entity, Loop):
-            self.script += f'{eid} = {parent}Loop(times={entity.end.times})\n'
+            self.script += f'{eid} = {parent}Loop(\'{name}\', times={entity.end.times})\n'
+        elif isinstance(entity, Process):
+            self.script += f'{eid} = {parent}Process(\'{name}\')\n'
         elif isinstance(entity, Component):
             self.script_item += f'{eid} = {parent}Component(\'{name}\')\n'
         elif isinstance(entity, Item):

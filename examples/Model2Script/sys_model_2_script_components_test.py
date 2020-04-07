@@ -1,4 +1,4 @@
-from entity import *
+from sysmpy import *
 from script_generator import ScriptGenerator
 
 import examples.BlockModels.BD1_Two_Blocks_Test as b1

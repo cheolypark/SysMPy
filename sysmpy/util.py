@@ -1,4 +1,5 @@
 import re
+import sys, inspect
 
 
 def is_path_same(path_base, path_target):
@@ -57,6 +58,26 @@ def or_selector_tree(elements, cur_index, cur_element):
 
     return return_list
 
-elements = ['1', '2', '3']
-or_selector(elements)
+
+# import entity
+# def print_class_hierachy():
+#     hierachy = {}
+#     for name, obj in inspect.getmembers(entity):
+#         if inspect.isclass(obj):
+#             base = obj.__bases__[0].__name__
+#             name = obj.__name__
+#             if base not in hierachy:
+#                 hierachy[base] = []
+#
+#             hierachy[base].append(name)
+#             print(name, 'is a', base)
+#
+#     print(hierachy)
+
+# print_class_hierachy()
+# Function: or_selector
+# elements = ['1', '2', '3']
+# or_selector(elements)
+
+# Function: is_path_same
 # print(is_path_same('Projects.AD_Folder\\AD1', 'E:\\SW-SysMPy\\SysMPy\\examples\\Projects\\AD_Folder\\AD1'))

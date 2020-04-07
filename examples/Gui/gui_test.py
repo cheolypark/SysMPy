@@ -1,4 +1,4 @@
-from entity import *
+from sysmpy import *
 import asyncio
 from gui_mxgraph_action_diagram import GuiMXGraphActionDiagram
 from gui_mxgraph_block_diagram import GuiMXGraphBlockDiagram

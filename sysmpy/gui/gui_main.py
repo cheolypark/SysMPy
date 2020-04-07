@@ -43,3 +43,6 @@ def show(p, width=960, height=750, diagram='AD', remote=True, type=Action):
 #
 # def show(p):
 #     IFrame("http://localhost:8080/?g=" + p.get_mx_action_diagram(), width=1000, height=700)
+
+# Example
+# http://www.sysmpy.org/view/?g=var v1 = graph.insertVertex(parent, null, 'Hello,', 20, 20, 80, 30) /n var v2 = graph.insertVertex(parent, null, 'World!', 200, 150, 80, 30)/n var e1 = graph.insertEdge(parent, null, '', v1, v2)/n

@@ -1,6 +1,4 @@
-from entity import *
-import asyncio
-from entity import *
+from sysmpy import *
 
 
 """
@@ -46,8 +44,6 @@ print('system models to scripts')
 ###############################################
 # 1 Define actions
 p = Process("process")
-p.Action("Act")
-
 p_con = p.Condition("Condition 1")
 
 p1 = p_con.Process("process 1")
