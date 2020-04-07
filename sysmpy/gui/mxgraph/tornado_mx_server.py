@@ -13,7 +13,51 @@ from tornado.options import define, options
 import ad_script
 import bd_script
 import hd_script
+from script_sample import *
 
+from sysmpy import *
+
+# /ad_sample/ Handler
+class ActionDiagramSampleHandler(RequestHandler):
+    def get(self):
+        p = getActionScript() # call sample Acton diagram Unified Script
+        gad = GuiMXGraphActionDiagram()
+        my_graph = gad.get_mxgraph( p )
+        my_graph = my_graph.replace("/n", "\n")
+        self.write(ad_script.mxGraph_start_nice_label + ad_script.mxGraph_styles + my_graph + ad_script.mxGraph_end)
+        self.render('simple_mx_web.html')
+
+# /DM/ Handler
+class DiagramModifyHandler(RequestHandler):
+    def get(self):
+        evt = self.get_arguments("evt")
+        evt = str(evt[0])
+        evt = evt.replace("/n", "\n").strip()
+        evtData = self.get_arguments("data")
+        evtData = str(evtData[0])
+        evtData = evtData.replace("/n", "\n").strip()
+
+        if evt == "addItem" :
+            print("addItem: ", evtData )
+        elif evt == "deleteItem" :
+            print("deleteItem: ", evtData)
+        else :
+            print("undefine event(evt)")
+
+        rootEntity = entity_db.get_by_type( Process )[0]
+        #rootEntity = entity_db.get("Root Process")
+
+        targetData = entity_db.get( evtData )
+
+        entity_db.remove_entity( targetData )
+
+        gad = GuiMXGraphActionDiagram()
+
+        my_graph = gad.get_mxgraph( rootEntity )
+        my_graph = my_graph.replace("/n", "\n")
+        self.write(ad_script.mxGraph_start_nice_label + ad_script.mxGraph_styles + my_graph + ad_script.mxGraph_end)
+        #self.write( my_graph )
+        self.render('simple_mx_web.html')
 
 class ActionDiagramHandler(RequestHandler):
     def get(self):
@@ -60,6 +104,8 @@ class TornadoMXServer():
         application = Application([ (r'/src/js/(.*)', StaticFileHandler, {'path': './src/js'}),
                                     (r'/src/css/(.*)', StaticFileHandler, {'path': './src/css'}),
                                     (r'/src/images/(.*)', StaticFileHandler, {'path': './src/images'}),
+                                    (r"/ad_sample/", ActionDiagramSampleHandler),
+                                    (r"/DM/", DiagramModifyHandler),
                                     (r"/AD/", ActionDiagramHandler),
                                     (r"/BD/", BlockDiagramHandler),
                                     (r"/HD/", HierarchyDiagramHandler)
