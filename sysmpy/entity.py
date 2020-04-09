@@ -8,7 +8,9 @@ from copy import deepcopy
 import sysmpy.entity_db as entity_db
 from sysmpy.util import *
 
-
+# ========================================================================= #
+#                                 Entity                                    #
+# ========================================================================= #
 class Entity():
     """ LIFECYCLE MODELING LANGUAGE (LML) SPECIFICATION 1.1:
     An entity is something can exist by itself and is uniquely identifiable.
@@ -220,10 +222,10 @@ class Entity():
     def debug_mode(b):
         Entity._debug_mode = b
 
-########################################################################
-# Static Entity
-#
-#
+
+# ========================================================================= #
+#                             Static Entity                                 #
+# ========================================================================= #
 class StaticEntity(Entity):
     """ This is an abstract class regarding Static Entity"""
 
@@ -255,6 +257,9 @@ class StaticEntity(Entity):
         return str
 
 
+# ========================================================================= #
+#                                Property                                   #
+# ========================================================================= #
 class Property(StaticEntity):
     def __init__(self, name, range=None, value=None):
         """
@@ -274,7 +279,15 @@ class Property(StaticEntity):
             self.value = random.choice(self.range)
             return self.value
 
+    def get_one(self):
+        if isinstance(self.range, list):
+            self.value = self.range.pop(0)
+            return self.value
 
+
+# ========================================================================= #
+#                                  Item                                     #
+# ========================================================================= #
 class Item(StaticEntity):
     def __init__(self, name):
         super().__init__(name)
@@ -288,6 +301,9 @@ class Item(StaticEntity):
         self._size = s
 
 
+# ========================================================================= #
+#                                  Conduit                                  #
+# ========================================================================= #
 class Conduit(StaticEntity):
     """
     Conduit is a kind of link or gui.
@@ -326,6 +342,9 @@ class Conduit(StaticEntity):
         self._capacity = capacity
 
 
+# ========================================================================= #
+#                                  Resource                                 #
+# ========================================================================= #
 class Resource(StaticEntity):
     def __init__(self, name, amount=10, minimum=1, maximum=10, units=None):
         super().__init__(name)
@@ -336,6 +355,9 @@ class Resource(StaticEntity):
         self.units = units
 
 
+# ========================================================================= #
+#                                Requirement                                #
+# ========================================================================= #
 class Requirement(Property):
     def __init__(self, name, range=None, value=None, **kwargs):
         super().__init__(name, range, value)
@@ -377,6 +399,9 @@ class Requirement(Property):
         return ret
 
 
+# ========================================================================= #
+#                                Component                                  #
+# ========================================================================= #
 class Component(StaticEntity):
     def __init__(self, name, **kwargs):
         super().__init__(name)
@@ -404,10 +429,9 @@ class Component(StaticEntity):
         return obj
 
 
-########################################################################
-# Dynamic Entity
-#
-#
+# ========================================================================= #
+#                            Dynamic Entity                                 #
+# ========================================================================= #
 class DynamicEntity(Entity):
     """ This is an abstract class regarding Dynamic Entity"""
 
@@ -518,7 +542,7 @@ class DynamicEntity(Entity):
         self.function = function
 
     ########################################################################
-    # Simulation Methods
+    # RM_sim Methods
     #
     #
     def make_network(self):
@@ -676,6 +700,10 @@ class DynamicEntity(Entity):
             #
             ##################################################################################
 
+            # if self.name == 'A':
+            #     print(self.name)
+            #     print('!')
+
             ########################################################################
             # Check 1: Check waiting state
             # Any process can be waiting, if there is no event to this process
@@ -741,14 +769,14 @@ class DynamicEntity(Entity):
 
                 # If this flow should be fired,
                 # All process which sent were reset to 'sent = False'
-                if b_flow_fire:
-                    for r in flows_true:
-                        r.sent = False
-
-                    # Set a new start time for this process by checking the times of the previous flow entities
-                    max_time = max([r.start.time for r in flowed_from])
-                    self.time = max_time
-                    info += 'Fired from: ' + ', '.join([r.start.name for r in flows_true])
+                # if b_flow_fire:
+                #     for r in flows_true:
+                #         r.sent = False
+                #
+                #     # Set a new start time for this process by checking the times of the previous flow entities
+                #     max_time = max([r.start.time for r in flowed_from])
+                #     self.time = max_time
+                #     info += 'Fired from: ' + ', '.join([r.start.name for r in flows_true])
 
             ########################################################################
             # Check 3: Resources Consumes
@@ -845,8 +873,21 @@ class DynamicEntity(Entity):
             #       Phase 2: Perform Action
             #
             ##################################################################################
+            # if self.name == 'A':
+            #     print(self.name, b_flow_fire, b_seizes_fire, b_consumes_fire, b_triggered_fire)
+            #     print('!')
 
             if b_flow_fire and b_seizes_fire and b_consumes_fire and b_triggered_fire:
+                ########################################################################
+                # Check 0: If this flow should be fired,
+                # All process which sent were reset to 'sent = False'
+                for r in flows_true:
+                    r.sent = False
+
+                # Set a new start time for this process by checking the times of the previous flow entities
+                max_time = max([r.start.time for r in flowed_from])
+                self.time = max_time
+                info += 'Fired from: ' + ', '.join([r.start.name for r in flows_true])
 
                 ########################################################################
                 # Check 1: Activate this action
@@ -1020,6 +1061,9 @@ class DynamicEntity(Entity):
                 await asyncio.sleep(0)
 
 
+# ========================================================================= #
+#                                Action                                     #
+# ========================================================================= #
 class Action(DynamicEntity):
     """
     Action Dynamic Entity
@@ -1054,6 +1098,9 @@ class Action_END(DynamicEntity):
         super().__init__(name)
 
 
+# ========================================================================= #
+#                                And                                        #
+# ========================================================================= #
 class And(DynamicEntity):
     """
     And Dynamic Entity
@@ -1086,6 +1133,9 @@ class And_END(DynamicEntity):
         super().__init__(name)
 
 
+# ========================================================================= #
+#                                   Or                                      #
+# ========================================================================= #
 class Or(DynamicEntity):
     """
     Or Dynamic Entity
@@ -1118,6 +1168,9 @@ class Or_END(DynamicEntity):
         super().__init__(name)
 
 
+# ========================================================================= #
+#                                  XOr                                      #
+# ========================================================================= #
 class XOr(DynamicEntity):
     """
     XOr Dynamic Entity
@@ -1151,6 +1204,9 @@ class XOr_END(DynamicEntity):
         super().__init__(name)
 
 
+# ========================================================================= #
+#                                Condition                                  #
+# ========================================================================= #
 class Condition(DynamicEntity):
     """
     Condition Dynamic Entity
@@ -1187,6 +1243,9 @@ class Condition_END(DynamicEntity):
         super().reset_waiting()
 
 
+# ========================================================================= #
+#                                    END                                    #
+# ========================================================================= #
 class END(DynamicEntity):
     """
     END Dynamic Entity
@@ -1200,6 +1259,9 @@ class END(DynamicEntity):
         super().reset_waiting()
 
 
+# ========================================================================= #
+#                                 ExitLoop                                  #
+# ========================================================================= #
 class ExitLoop(DynamicEntity):
     def __init__(self, name):
         super().__init__(name)
@@ -1208,6 +1270,9 @@ class ExitLoop(DynamicEntity):
         super().reset_waiting()
 
 
+# ========================================================================= #
+#                                 Process                                   #
+# ========================================================================= #
 class Process(DynamicEntity):
     """
     Process Dynamic Entity
@@ -1219,7 +1284,7 @@ class Process(DynamicEntity):
     global_time = 0
     # 'global_max' is used to denote when SMRE_Example will stop
     global_max = None
-    # Simulation count is used to count each simulation run
+    # RM_sim count is used to count each simulation run
     simulation_count = 0
     # simulation results are stored in queue
     event_queue = queue.Queue()
@@ -1312,17 +1377,17 @@ class Process(DynamicEntity):
                 if event != 'waiting' and \
                    event != 'activated' and \
                    event != 'completed' :
-                    print(f'At Time {act.time}, {act.name} {event}.')
+                    print(f'At Time {act.time}, "{act.name}" {event}.')
                     evt = {'class': act.__class__.__name__, 'name': act.name, 'time': act.time, 'event': event}
                     Process.event_queue.put(evt)
             else:
                 if Entity._debug_mode:
                     if event != 'waiting':
-                        print(f'At Time {act.time}, {act.name} {event}.')
+                        print(f'At Time {act.time}, "{act.name}" {event}.')
                         evt = {'class':act.__class__.__name__, 'name': act.name, 'time': act.time, 'event': event}
                         Process.event_queue.put(evt)
                 else:
-                    print(f'At Time {act.time}, {act.name} {event}.')
+                    print(f'At Time {act.time}, "{act.name}" {event}.')
                     evt = {'class': act.__class__.__name__, 'name': act.name, 'time': act.time, 'event': event}
                     Process.event_queue.put(evt)
 
@@ -1360,7 +1425,7 @@ class Process(DynamicEntity):
 
             try:
                 res = await asyncio.gather(*workers)
-                print('--------- Simulation Completed ---------')
+                print('--------- RM_sim Completed ---------')
 
                 del new_en
 
@@ -1475,6 +1540,9 @@ class Process_END(DynamicEntity):
         super().__init__(name)
 
 
+# ========================================================================= #
+#                                   Loop                                    #
+# ========================================================================= #
 class Loop(Process):
     """
     Loop Dynamic Entity

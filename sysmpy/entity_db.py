@@ -47,6 +47,8 @@ def get(name_entity, path=None, comparing_method=None):
         e.g.,) 'examples.folder.module.component_name1.item_name2'
                 [         path        ][      entity name       ]
 
+    Note: In a same file, an entity name can not be same for using this function!
+
     :param name_entity: a name that we want to find
     :param path: a path where the object was created
     :return: a founded object or a list of objects
