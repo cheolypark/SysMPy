@@ -115,7 +115,7 @@ def get_op(comparing_method, target, caller=None):
         if caller is None:
             e = [x for x in entity_database if x.name == target]
         elif caller is not None:
-            e = [x for x in entity_database if x.name == target and is_path_same(caller, x.module)]
+            e = [x for x in entity_database if x.name == target ] # and is_path_same(caller, x.module)]
     elif comparing_method == 'ByID':
         e = [x for x in entity_database if f'ID{id(x)}' == target]
 
