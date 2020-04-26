@@ -123,6 +123,7 @@ class Entity():
     def search(self, inverse=False, class_search=[]):
         """
         This returns an entity list and a relation list for this entity using search words
+        e.g.,) entity_results, relation_results = self.search(class_search=[Requirement])
         :param inverse: 'True' means tracing inverse direction
         :param class_search: search words
         :return: The entity and relation list
@@ -185,11 +186,25 @@ class Entity():
                 root = x.start.find_root()
         return root
 
-    def find_all_nodes(self, class_type, ret_list):
+    def find_ancestor_nodes(self, class_type):
         """
-        This finds all nodes specified in the input 'rel_type'
+        This finds all ancestor nodes by back tracking
+        e.g.,)
+        ret = find_all_nodes(Loop)
         :return:
         A list of all nodes created from the class rel_type
+        """
+        ret = []
+        self.find_ancestor_nodes_op(class_type, ret)
+
+        if len(ret) == 0:
+            return None
+
+        return ret
+
+    def find_ancestor_nodes_op(self, class_type, ret_list):
+        """
+        This finds all nodes specified in the input 'rel_type'
         """
 
         if 'contained in' not in self.inv_relation:
@@ -203,15 +218,22 @@ class Entity():
             return
         else:
             for x in r:
-                x.start.find_all_nodes(class_type, ret_list)
+                x.start.find_ancestor_nodes_op(class_type, ret_list)
 
     def find_loop_end(self):
         """
         This returns a first Loop-End node
         """
-        ret = []
-        self.find_all_nodes(Loop, ret)
+        ret = self.find_ancestor_nodes(Loop)
         return ret[0].start.end
+
+    # def find_loop_end(self):
+    #     """
+    #     This returns a first Loop-End node
+    #     """
+    #     ret = []
+    #     self.find_all_nodes(Loop, ret)
+    #     return ret[0].start.end
 
     # ########################################################################
     # # Static Methods

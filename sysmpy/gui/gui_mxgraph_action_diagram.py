@@ -99,27 +99,28 @@ class GuiMXGraphActionDiagram(GuiMXGraph):
 
         return node
 
-    def make_edge(self, s, e, point=None):
+    def make_edge(self, s, e, point=None, edge_style=None):
         # var e1 = graph.insertEdge(parent, null, '', v1, v2)\\n
         s_name = self.safe_name(s.get_numbered_name())
         e_name = self.safe_name(e.get_numbered_name())
         # edge = f"var {s}_{e} = graph.insertEdge(parent, null, '', {s}, {e}, 'verticalAlign=top') /n "
         # edge += f'{s}_{e}.geometry.points = [new mxPoint({s}.geometry.x + 10, 10)]/n'
 
-        if s.is_root is True or e.is_root is True:
-            edge_style = 'Arrow_Edge_Process'
-        elif isinstance(s, Item):
-            edge_style = 'Arrow_Edge_Item'
-        elif isinstance(e, Item):
-            edge_style = 'Edge_Item'
-        elif isinstance(s, Resource):
-            edge_style = 'Arrow_Edge_Resource'
-        elif isinstance(e, Resource):
-            edge_style = 'Edge_Resource'
-        elif isinstance(s, Loop_END) and isinstance(e, Loop):
-            edge_style = 'Arrow_Edge_Loop'
-        else:
-            edge_style = None
+        if edge_style is None:
+            if s.is_root is True or e.is_root is True:
+                edge_style = 'Arrow_Edge_Process'
+            elif isinstance(s, Item):
+                edge_style = 'Arrow_Edge_Item'
+            elif isinstance(e, Item):
+                edge_style = 'Edge_Item'
+            elif isinstance(s, Resource):
+                edge_style = 'Arrow_Edge_Resource'
+            elif isinstance(e, Resource):
+                edge_style = 'Edge_Resource'
+            elif isinstance(s, Loop_END) and isinstance(e, Loop):
+                edge_style = 'Arrow_Edge_Loop'
+            else:
+                edge_style = None
 
         if edge_style is not None:
             edge = f"var {s_name}_{e_name} = graph.insertEdge(parent, null, '', {s_name}, {e_name}, '{edge_style}' ) /n "
@@ -137,7 +138,7 @@ class GuiMXGraphActionDiagram(GuiMXGraph):
         # print(edge)
         return edge
 
-    def get_mxgraph_string(self, proc_en, entities, list_actions):
+    def get_mxgraph_string(self, proc_en, entities, list_items):
         str = ''
         # 1. Draw the root process entity
         flows = [r for r in proc_en.relation['flows'] if isinstance(r, Flow)]
@@ -159,40 +160,52 @@ class GuiMXGraphActionDiagram(GuiMXGraph):
                         str += self.make_edge(f.start, f.end)
 
         # For items
-        for action in list_actions:
-            receiving_items = []
+        y_pos = 0
+        for item in list_items:
+            self.init_graphic_variables(item)
+            receiver, sender = None, None
 
-            if 'receives' in action.relation:
-                receiving_items += [r.end for r in action.relation['receives'] if isinstance(r, Receives)]
+            if 'sent from' in item.inv_relation:
+                sender = item.inv_relation['sent from'][0].start
 
-            if 'consumes' in action.relation:
-                receiving_items += [r.end for r in action.relation['consumes'] if isinstance(r, Consumes)]
+            if 'produced by' in item.inv_relation:
+                sender = item.inv_relation['produced by'][0].start
 
-            y_pos = 0
-            for item in receiving_items:
-                self.init_graphic_variables(item)
+            if 'received by' in item.inv_relation:
+                receiver = item.inv_relation['received by'][0].start
 
-                if 'sent from' in item.inv_relation:
-                    sender = item.inv_relation['sent from'][0].start
+            if 'triggers' in item.inv_relation:
+                receiver = item.inv_relation['triggers'][0].start
 
-                if 'produced by' in item.inv_relation:
-                    sender = item.inv_relation['produced by'][0].start
-
-                direction = action.center_x - sender.center_x
+            if (receiver is not None) and (sender is not None):
+                direction = receiver.center_x - sender.center_x
                 if direction > 10:
-                    item.center_x = action.center_x - action.boundary_width/2
+                    item.center_x = receiver.center_x - receiver.boundary_width/2
                 elif direction < -10:
-                    item.center_x = action.center_x + action.boundary_width/2
+                    item.center_x = receiver.center_x + receiver.boundary_width/2
                 else:
-                    item.center_x = action.center_x - action.boundary_width/2
+                    item.center_x = receiver.center_x - receiver.boundary_width/2
 
-                item.center_y = action.center_y
+                item.center_y = receiver.center_y
 
                 str += self.make_node(item, item.center_x, item.center_y + y_pos)
                 str += self.make_edge(sender, item)
-                str += self.make_edge(item, action)
+                str += self.make_edge(item, receiver)
+            elif receiver is not None:
+                item.center_x = receiver.center_x - receiver.boundary_width / 2
+                item.center_y = receiver.center_y
 
-                y_pos -= item.height_half
+                str += self.make_node(item, item.center_x, item.center_y + y_pos)
+                str += self.make_edge(item, receiver)
+            elif sender is not None:
+                item.center_x = sender.center_x + sender.boundary_width / 2
+                item.center_y = sender.center_y
+
+                str += self.make_node(item, item.center_x, item.center_y + y_pos)
+                str += self.make_edge(sender, item, edge_style='Arrow_Edge_Item')
+
+            # Todo: fix this to do auto arrangement for heights of items
+            # y_pos -= item.height_half
 
         return str
 
@@ -254,8 +267,8 @@ class GuiMXGraphActionDiagram(GuiMXGraph):
 
         # find center_x and center_y
         if isinstance(entity, Action):
-            if 'receives' or 'triggered by' or 'consumes' or 'seizes' in entity.relation:
-                list_actions.append(entity) # list_actions is used for item positioning later
+            # if 'receives' or 'triggered by' or 'consumes' or 'seizes' or 'sends' in entity.relation:
+            #     list_actions.append(entity) # list_actions is used for item positioning later
 
             entity.center_x = parent.center_x
             entity.center_y = pre_edge_y + entity.height_half
@@ -325,10 +338,13 @@ class GuiMXGraphActionDiagram(GuiMXGraph):
 
         # 2. Find center_x and center_y for dynamic entity (e.g., Process, Action, and Condition)
         list_actions = [] # This is used for item positioning
+
+        list_items, _ = new_en.search(class_search=[Item])
+
         self.find_center(new_en, None, 0, 0, list_actions)
 
         self.mx_nodes = []
-        str = self.get_mxgraph_string(new_en, new_en.sim_network, list_actions)
+        str = self.get_mxgraph_string(new_en, new_en.sim_network, list_items)
 
         # print out control flows of UC
         return str

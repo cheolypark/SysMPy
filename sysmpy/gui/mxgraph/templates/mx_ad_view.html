@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="//code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
+    <script type="text/javascript"> mxBasePath = '../src';</script>
+    <script type="text/javascript" src="../src/js/mxClient.js"></script>
+
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+    <script type="text/javascript">
+
+
+	// Set mxGraph as a global variable
+	var graph;
+
+	// Program starts here. Creates a sample graph in the
+	// DOM node with the specified ID. This function is invoked
+	// from the onLoad event handler of the document (see below).
+	function view_main(container){
+		 // Checks if the browser is supported
+		 if (!mxClient.isBrowserSupported()){
+			mxUtils.error('Browser is not supported!', 200, false);
+		 }
+		 else{
+			////////////////////////////////////////////////////////////////////////////
+			// Create a window which contains this graph
+			// var wnd = new mxWindow('AD', container, 10, 10, 800, 1000, true, true);
+			// wnd.setMaximizable(true);
+			// wnd.setResizable(true);
+			// wnd.setVisible(true);
+			// wnd.setScrollable(true);
+
+			////////////////////////////////////////////////////////////////////////////
+			// Creates the graph inside the given container
+			graph = new mxGraph(container);
+			graph.setTooltips(true);
+			graph.htmlLabels = true;
+			graph.vertexLabelsMovable = true;
+			new mxRubberband(graph);
+			new mxKeyHandler(graph);
+
+			////////////////////////////////////////////////////////////////////////////
+			// Do not allow removing labels from parents
+			graph.graphHandler.removeCellsFromParent = false;
+
+			// Autosize labels on insert where autosize=1
+			graph.autoSizeCellsOnAdd = true;
+
+			// Allows moving of relative cells
+			graph.isCellLocked = function(cell){
+			   return this.isCellsLocked();
+			};
+
+			graph.isCellResizable = function(cell){
+			   var geo = this.model.getGeometry(cell);
+			   return geo == null || !geo.relative;
+			};
+
+			// Truncates the label to the size of the vertex
+			graph.getLabel = function(cell){
+			   var label = (this.labelsVisible) ? this.convertValueToString(cell) : '';
+			   var geometry = this.model.getGeometry(cell);
+
+			   if (!this.model.isCollapsed(cell) && geometry != null && (geometry.offset == null ||
+				  (geometry.offset.x == 0 && geometry.offset.y == 0)) && this.model.isVertex(cell) &&
+				   geometry.width >= 2){
+					 var style = this.getCellStyle(cell);
+					 var fontSize = style[mxConstants.STYLE_FONTSIZE] || mxConstants.DEFAULT_FONTSIZE;
+
+					 //label에 한글이 있는지 없는지에 따라서 길이 설정.
+					 check = /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/;
+
+					 if(check.test(label)){
+						var max = geometry.width / (12);
+					 }
+					 else{
+						var max = geometry.width / (6);
+					 }
+
+					 if(label.length < max){
+						return label;
+					 }
+					 else if(label.length < 2*max){
+						return label.substring(0, max) + '<br>' + label.substring(max, 2*max);
+					 }
+					 else if(label.length < 3*max){
+						return label.substring(0, max) + '<br>' + label.substring(max, 2*max) +'<br>'+ label.substring(2*max, 3*max) ;
+					 }
+					 else if(label.length >= 3*max){
+						return label.substring(0, max) + '<br>' + label.substring(max, 2*max) +'<br>'+ label.substring(2*max, 3*max)+'...' ;
+					 }
+				  }
+			   };
+
+			// Enables wrapping for vertex labels
+			graph.isWrapping = function(cell){
+			   return this.model.isCollapsed(cell);
+			};
+
+			// Enables clipping of vertex labels if no offset is defined
+			graph.isLabelClipped = function(cell){
+			   var geometry = this.model.getGeometry(cell);
+
+			   return geometry != null && !geometry.relative && (geometry.offset == null ||
+					  (geometry.offset.x == 0 && geometry.offset.y == 0));
+			};
+
+			// Gets the default parent for inserting new cells. This
+			// is normally the first child of the root (ie. layer 0).
+			var parent = graph.getDefaultParent();
+			var style = graph.getStylesheet().getDefaultVertexStyle();
+			style[mxConstants.STYLE_FONTSIZE] = 11;
+			style[mxConstants.STYLE_FONTCOLOR] = 'RoyalBlue';
+			style[mxConstants.STYLE_STROKECOLOR] = 'RoyalBlue';
+			style[mxConstants.STYLE_FILLCOLOR] = '#C2DFFF';
+			//style[mxConstants.STYLE_ROUNDED] = true;
+
+			style = graph.getStylesheet().getDefaultEdgeStyle();
+			//style[mxConstants.STYLE_EDGE] = mxEdgeStyle.ElbowConnector;
+			//style[mxConstants.STYLE_ENDARROW] = mxConstants.ARROW_BLOCK;
+			//style[mxConstants.STYLE_ROUNDED] = false;
+			style[mxConstants.STYLE_OPACITY] = 50;
+			style[mxConstants.STYLE_FONTCOLOR] = 'black';
+			style[mxConstants.STYLE_STROKECOLOR] = '#b9c8f4';
+			delete graph.getStylesheet().getDefaultEdgeStyle()['endArrow'];
+
+			// Custom styles
+			// 1. Custom Edge
+			var style = new Object();
+			style[mxConstants.STYLE_ENDARROW] = mxConstants.ARROW_BLOCK;
+			style[mxConstants.STYLE_STROKECOLOR] = '#b9c8f4';
+			style[mxConstants.STYLE_OPACITY] = 50;
+			graph.getStylesheet().putCellStyle('Arrow_Edge_Process', style);
+
+			var style = new Object();
+			style[mxConstants.STYLE_ENDARROW] = mxConstants.ARROW_BLOCK;
+			style[mxConstants.STYLE_STROKECOLOR] = '#6AFB92';
+			style[mxConstants.STYLE_OPACITY] = 50;
+			graph.getStylesheet().putCellStyle('Arrow_Edge_Item', style);
+
+			var style = new Object();
+			style[mxConstants.STYLE_STROKECOLOR] = '#6AFB92';
+			style[mxConstants.STYLE_OPACITY] = 50;
+			graph.getStylesheet().putCellStyle('Edge_Item', style);
+
+			var style = new Object();
+			style[mxConstants.STYLE_ENDARROW] = mxConstants.ARROW_BLOCK;
+			style[mxConstants.STYLE_STROKECOLOR] = '#e0c200';
+			style[mxConstants.STYLE_OPACITY] = 50;
+			graph.getStylesheet().putCellStyle('Arrow_Edge_Resource', style);
+
+			var style = new Object();
+			style[mxConstants.STYLE_STROKECOLOR] = '#e0c200';
+			style[mxConstants.STYLE_OPACITY] = 50;
+			graph.getStylesheet().putCellStyle('Edge_Resource', style);
+
+			var style = new Object();
+			style[mxConstants.STYLE_ENDARROW] = mxConstants.ARROW_BLOCK;
+			style[mxConstants.STYLE_EDGE] = mxEdgeStyle.ElbowConnector;
+			style[mxConstants.STYLE_ROUNDED] = true;
+			style[mxConstants.STYLE_STROKECOLOR] = '#b9c8f4';
+			style[mxConstants.STYLE_OPACITY] = 50;
+			graph.getStylesheet().putCellStyle('Arrow_Edge_Loop', style);
+
+			// 2. Custom Node
+			var style = new Object();
+			style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_HEXAGON;
+			style[mxConstants.STYLE_FONTSIZE] = 11;
+			style[mxConstants.STYLE_FONTCOLOR] = 'RoyalBlue';
+			style[mxConstants.STYLE_STROKECOLOR] = 'RoyalBlue';
+			style[mxConstants.STYLE_FILLCOLOR] = 'white';
+			graph.getStylesheet().putCellStyle('Loop', style);
+			graph.getStylesheet().putCellStyle('Loop_END', style);
+			var style = new Object();
+			style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_ELLIPSE;
+			style[mxConstants.STYLE_FONTSIZE] = 11;
+			style[mxConstants.STYLE_FONTCOLOR] = 'RoyalBlue';
+			style[mxConstants.STYLE_STROKECOLOR] = 'RoyalBlue';
+			style[mxConstants.STYLE_FILLCOLOR] = 'white';
+			graph.getStylesheet().putCellStyle('And', style);
+			graph.getStylesheet().putCellStyle('And_END', style);
+
+			var style = new Object();
+			style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_RHOMBUS;
+			style[mxConstants.STYLE_FONTSIZE] = 11;
+			style[mxConstants.STYLE_FONTCOLOR] = 'RoyalBlue';
+			style[mxConstants.STYLE_STROKECOLOR] = 'RoyalBlue';
+			style[mxConstants.STYLE_FILLCOLOR] = 'white';
+			graph.getStylesheet().putCellStyle('Or', style);
+			graph.getStylesheet().putCellStyle('Or_END', style);
+			graph.getStylesheet().putCellStyle('Condition_END', style);
+
+			var style = new Object();
+			style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_ELLIPSE;
+			style[mxConstants.STYLE_FONTSIZE] = 11;
+			style[mxConstants.STYLE_FONTCOLOR] = 'RoyalBlue';
+			style[mxConstants.STYLE_STROKECOLOR] = 'RoyalBlue';
+			style[mxConstants.STYLE_FILLCOLOR] = 'white';
+			graph.getStylesheet().putCellStyle('Process', style);
+
+			var style = new Object();
+			style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_DOUBLE_ELLIPSE;
+			style[mxConstants.STYLE_FONTSIZE] = 11;
+			style[mxConstants.STYLE_FONTCOLOR] = 'RoyalBlue';
+			style[mxConstants.STYLE_STROKECOLOR] = 'RoyalBlue';
+			style[mxConstants.STYLE_FILLCOLOR] = 'white';
+			graph.getStylesheet().putCellStyle('Process_END', style);
+
+			var style = new Object();
+			style[mxConstants.STYLE_SHAPE] = 'box';
+			style[mxConstants.STYLE_FONTCOLOR] = 'RoyalBlue';
+			style[mxConstants.STYLE_FILLCOLOR] = '#C2DFFF';
+			style[mxConstants.STYLE_STROKECOLOR] = 'RoyalBlue';
+			style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_CENTER;
+			style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_MIDDLE;
+			style[mxConstants.STYLE_FONTSIZE] = 11;
+			graph.getStylesheet().putCellStyle('Action', style);
+			graph.getStylesheet().putCellStyle('Condition', style);
+
+			var style = new Object();
+			style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_RECTANGLE;
+			//style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RhombusPerimeter;
+			//style[mxConstants.STYLE_OPACITY] = 50;
+			style[mxConstants.STYLE_FONTCOLOR] = '#3EA055';
+			style[mxConstants.STYLE_FILLCOLOR] = '#C3FDB8';
+			style[mxConstants.STYLE_STROKECOLOR] = '#6AFB92';
+			style[mxConstants.STYLE_ROUNDED] = true;
+			style[mxConstants.STYLE_FONTSIZE] = 11;
+			graph.getStylesheet().putCellStyle('Item', style);
+
+			var style = new Object();
+			style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_RECTANGLE;
+			//style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RhombusPerimeter;
+			//style[mxConstants.STYLE_OPACITY] = 50;
+			style[mxConstants.STYLE_FONTCOLOR] = '#a38d00';
+			style[mxConstants.STYLE_FILLCOLOR] = '#ffe95c';
+			style[mxConstants.STYLE_STROKECOLOR] = '#e0c200';
+			style[mxConstants.STYLE_ROUNDED] = true;
+			style[mxConstants.STYLE_FONTSIZE] = 11;
+			graph.getStylesheet().putCellStyle('Resource', style);
+
+			// Gets the default parent for inserting new cells. This
+			// is normally the first child of the root (ie. layer 0).
+			var parent = graph.getDefaultParent();
+			// Adds cells to the model in a single step
+			graph.getModel().beginUpdate();
+			try{
+	//            var A_process = graph.insertVertex(parent, 'A process', '', 105.0, 42.0, 30, 30, 'Process')
+			   {{ad_model|safe}}
+			}
+			finally
+			{
+			   // Updates the display
+			   graph.getModel().endUpdate();
+			}
+
+			// Fit the graph size to the html div size
+			graph.fit();
+			graph.view.rendering = true;
+			graph.refresh();
+		}
+	};
+
+
+	$(document).ready(function(){
+		//connect to the socket server.
+		var socket = io.connect('http://' + document.domain + ':' + location.port + '/socket');
+
+		//receive details from server
+		socket.on('sim_updated', function(msg) {
+			console.log("MSG: " + msg.data);
+			//maintain a list of ten numbers
+
+			v1 = graph.model.getCell('2');
+			graph.model.setValue(v1, msg.data);
+			graph.refresh();
+
+		});
+	});
+
+    </script>
+</head>
+<!-- Page passes the container for the graph to the program -->
+<body onload="view_main(document.getElementById('graphContainer'))">
+<!-- Creates a container for the graph with a grid wallpaper -->
+<div id="graphContainer"
+     style="overflow:hidden;width:321px;height:241px;background:url('editors/images/grid.gif')">
+</div>
+</body>
+</html>

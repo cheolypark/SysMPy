@@ -17,6 +17,7 @@ from script_sample import *
 
 from sysmpy import *
 
+
 # /ad_sample/ Handler
 class ActionDiagramSampleHandler(RequestHandler):
     def get(self):
@@ -26,6 +27,7 @@ class ActionDiagramSampleHandler(RequestHandler):
         my_graph = my_graph.replace("/n", "\n")
         self.write(ad_script.mxGraph_start_nice_label + ad_script.mxGraph_styles + my_graph + ad_script.mxGraph_end)
         self.render('simple_mx_web.html')
+
 
 # /DM/ Handler
 class DiagramModifyHandler(RequestHandler):
@@ -58,6 +60,7 @@ class DiagramModifyHandler(RequestHandler):
         self.write(ad_script.mxGraph_start_nice_label + ad_script.mxGraph_styles + my_graph + ad_script.mxGraph_end)
         #self.write( my_graph )
         self.render('simple_mx_web.html')
+
 
 class ActionDiagramHandler(RequestHandler):
     def get(self):
@@ -97,7 +100,7 @@ class HierarchyDiagramHandler(RequestHandler):
 
 class TornadoMXServer():
     def __init__(self):
-        define("port", default=8080, help="run on the given port", type=int)
+        define("port", default=9191, help="run on the given port", type=int)
 
     def run(self):
         tornado.options.parse_command_line()

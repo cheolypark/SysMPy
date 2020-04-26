@@ -9,8 +9,18 @@ from sysmpy.gui.gui_mxgraph_block_diagram import GuiMXGraphBlockDiagram
 from sysmpy.gui.gui_mxgraph_hierarchy_diagram import GuiMXGraphHierarchyDiagram
 import urllib
 
+# This removes all warning messages in the Jupyter notebook.
+# Since the flask web server generates warning messages, we use this.
+import logging, sys
+logging.disable()
 
-def show(p, width=960, height=750, diagram='AD', remote=True, type=Action):
+# from sysmpy.gui.mxgraph.flask2 import start_server
+# start_server()
+
+from sysmpy.gui.mxgraph.flask_socket_server import start_server
+start_server()
+
+def show(p, width=960, height=750, diagram='AD', type=Action):
 
     if diagram == 'AD':
         graph = GuiMXGraphActionDiagram().get_mxgraph(p)
@@ -21,10 +31,7 @@ def show(p, width=960, height=750, diagram='AD', remote=True, type=Action):
 
     # print(graph)
 
-    if remote is True:
-        src = "http://www.sysmpy.org/view/?g=" + graph
-    else:
-        src = "http://127.0.0.1:8000/view/?g=" + graph
+    src = "http://127.0.0.1:9191/?g=" + graph
 
     # parsed_html = urllib.parse.quote(src, safe="~@#$&()*!+=:;,.?/\'")
     # print(src)

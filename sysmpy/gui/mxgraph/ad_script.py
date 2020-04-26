@@ -189,6 +189,7 @@ mxGraph_styles = '''
                             style[mxConstants.STYLE_STROKECOLOR] = 'RoyalBlue'; 
                             style[mxConstants.STYLE_FILLCOLOR] = 'white';
                             graph.getStylesheet().putCellStyle('And', style);
+                            graph.getStylesheet().putCellStyle('And_END', style);
 
                             var style = new Object();
                             style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_RHOMBUS;
@@ -199,8 +200,7 @@ mxGraph_styles = '''
                             graph.getStylesheet().putCellStyle('Or', style);
                             graph.getStylesheet().putCellStyle('Or_END', style); 
                             graph.getStylesheet().putCellStyle('Condition_END', style);
-                            graph.getStylesheet().putCellStyle('And_END', style);
-
+                            
                             var style = new Object();
                             style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_ELLIPSE;
                             style[mxConstants.STYLE_FONTSIZE] = 11;

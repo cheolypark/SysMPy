@@ -56,7 +56,8 @@ class GuiMXGraphBlockDiagram(GuiMXGraph):
             node_height = en.node_height
         elif isinstance(en, And) or isinstance(en, And_END) or isinstance(en, Condition_END) or \
                 isinstance(en, Loop) or isinstance(en, Loop_END) or \
-                isinstance(en, Or) or isinstance(en, Or_END):
+                isinstance(en, Or) or isinstance(en, Or_END) or \
+                isinstance(en, XOr) or isinstance(en, XOr_END):
             node_width = en.node_height
             node_height = en.node_height
         elif isinstance(en, Process) or isinstance(en, Process_END):
@@ -74,16 +75,18 @@ class GuiMXGraphBlockDiagram(GuiMXGraph):
             label = ''
         if isinstance(en, Process_END):
             label = ''
-        elif isinstance(en, And):
+        elif isinstance(en, And) or isinstance(en, And_END):
             label = 'A'
-        elif isinstance(en, Or) or isinstance(en, Or_END) or isinstance(en, Condition_END) or isinstance(en, And_END):
+        elif isinstance(en, Or) or isinstance(en, Or_END) or isinstance(en, Condition_END):
             label = 'OR'
+        elif isinstance(en, XOr) or isinstance(en, XOr_END):
+            label = 'XO'
         elif isinstance(en, Loop) or isinstance(en, Loop_END):
             label = 'L'
 
         # compensate the node position after resizing
-        x += (en.node_width - node_width)/2
-        y += (en.node_height - node_height)/2
+        x += (en.node_width - node_width) / 2
+        y += (en.node_height - node_height) / 2
 
         node = ''
         s_name = self.safe_name(name)
@@ -96,27 +99,28 @@ class GuiMXGraphBlockDiagram(GuiMXGraph):
 
         return node
 
-    def make_edge(self, s, e, point=None):
+    def make_edge(self, s, e, point=None, edge_style=None):
         # var e1 = graph.insertEdge(parent, null, '', v1, v2)\\n
         s_name = self.safe_name(s.get_numbered_name())
         e_name = self.safe_name(e.get_numbered_name())
         # edge = f"var {s}_{e} = graph.insertEdge(parent, null, '', {s}, {e}, 'verticalAlign=top') /n "
         # edge += f'{s}_{e}.geometry.points = [new mxPoint({s}.geometry.x + 10, 10)]/n'
 
-        if s.is_root is True or e.is_root is True:
-            edge_style = 'Arrow_Edge_Process'
-        elif isinstance(s, Item):
-            edge_style = 'Arrow_Edge_Item'
-        elif isinstance(e, Item):
-            edge_style = 'Edge_Item'
-        elif isinstance(s, Resource):
-            edge_style = 'Arrow_Edge_Resource'
-        elif isinstance(e, Resource):
-            edge_style = 'Edge_Resource'
-        elif isinstance(s, Loop_END) and isinstance(e, Loop):
-            edge_style = 'Arrow_Edge_Loop'
-        else:
-            edge_style = None
+        if edge_style is None:
+            if s.is_root is True or e.is_root is True:
+                edge_style = 'Arrow_Edge_Process'
+            elif isinstance(s, Item):
+                edge_style = 'Arrow_Edge_Item'
+            elif isinstance(e, Item):
+                edge_style = 'Edge_Item'
+            elif isinstance(s, Resource):
+                edge_style = 'Arrow_Edge_Resource'
+            elif isinstance(e, Resource):
+                edge_style = 'Edge_Resource'
+            elif isinstance(s, Loop_END) and isinstance(e, Loop):
+                edge_style = 'Arrow_Edge_Loop'
+            else:
+                edge_style = None
 
         if edge_style is not None:
             edge = f"var {s_name}_{e_name} = graph.insertEdge(parent, null, '', {s_name}, {e_name}, '{edge_style}' ) /n "
@@ -124,7 +128,7 @@ class GuiMXGraphBlockDiagram(GuiMXGraph):
             edge = f"var {s_name}_{e_name} = graph.insertEdge(parent, null, '', {s_name}, {e_name} ) /n "
 
         if point is not None:
-            edge += f'{s_name}_{e_name}.geometry.points = [new mxPoint( {point}, 0 )]/n'
+            edge += f'{s_name}_{e_name}.geometry.points = [new mxPoint({point}, 50)] /n '
         # e = graph.insertEdge(lane2a, null, 'No', step444, end3, 'verticalAlign=top');
         # e.geometry.points = [new mxPoint(step444.geometry.x + step444.geometry.width / 2,
         #                                  end3.geometry.y + end3.geometry.height / 2)];
@@ -134,14 +138,16 @@ class GuiMXGraphBlockDiagram(GuiMXGraph):
         # print(edge)
         return edge
 
-    def get_mxgraph_string(self, entity, entities, list_actions):
+    def get_mxgraph_string(self, proc_en, entities, list_items):
         str = ''
-        flows = [r for r in entity.relation['flows'] if isinstance(r, Flow)]
+        # 1. Draw the root process entity
+        flows = [r for r in proc_en.relation['flows'] if isinstance(r, Flow)]
         for i, f in enumerate(flows):
             str += self.make_node(f.start)
             str += self.make_node(f.end)
             str += self.make_edge(f.start, f.end)
 
+        # 2. Draw other entities
         for e in entities:
             if 'flows' in e.relation:
                 flows = [r for r in e.relation['flows'] if isinstance(r, Flow)]
@@ -149,56 +155,69 @@ class GuiMXGraphBlockDiagram(GuiMXGraph):
                     str += self.make_node(f.start)
                     str += self.make_node(f.end)
                     if isinstance(f.start, Loop_END) and isinstance(f.end, Loop):
-                        str += self.make_edge(f.start, f.end, point=f.start.center_x+f.start.node_width+20)
+                        str += self.make_edge(f.start, f.end, point=f.start.center_x + f.start.node_width + 20)
                     else:
                         str += self.make_edge(f.start, f.end)
 
         # For items
-        for action in list_actions:
-            receiving_items = []
+        y_pos = 0
+        for item in list_items:
+            self.init_graphic_variables(item)
+            receiver, sender = None, None
 
-            if 'receives' in action.relation:
-                receiving_items += [r.end for r in action.relation['receives'] if isinstance(r, Receives)]
+            if 'sent from' in item.inv_relation:
+                sender = item.inv_relation['sent from'][0].start
 
-            if 'consumes' in action.relation:
-                receiving_items += [r.end for r in action.relation['consumes'] if isinstance(r, Consumes)]
+            if 'produced by' in item.inv_relation:
+                sender = item.inv_relation['produced by'][0].start
 
-            y_pos = 0
-            for item in receiving_items:
-                self.init_graphic_variables(item)
+            if 'received by' in item.inv_relation:
+                receiver = item.inv_relation['received by'][0].start
 
-                if 'sent from' in item.inv_relation:
-                    sender = item.inv_relation['sent from'][0].start
+            if 'triggers' in item.inv_relation:
+                receiver = item.inv_relation['triggers'][0].start
 
-                if 'produced by' in item.inv_relation:
-                    sender = item.inv_relation['produced by'][0].start
-
-                direction = action.center_x - sender.center_x
+            if (receiver is not None) and (sender is not None):
+                direction = receiver.center_x - sender.center_x
                 if direction > 10:
-                    item.center_x = action.center_x - action.boundary_width/2
+                    item.center_x = receiver.center_x - receiver.boundary_width / 2
                 elif direction < -10:
-                    item.center_x = action.center_x + action.boundary_width/2
+                    item.center_x = receiver.center_x + receiver.boundary_width / 2
                 else:
-                    item.center_x = action.center_x - action.boundary_width/2
+                    item.center_x = receiver.center_x - receiver.boundary_width / 2
 
-                item.center_y = action.center_y
+                item.center_y = receiver.center_y
 
                 str += self.make_node(item, item.center_x, item.center_y + y_pos)
                 str += self.make_edge(sender, item)
-                str += self.make_edge(item, action)
+                str += self.make_edge(item, receiver)
+            elif receiver is not None:
+                item.center_x = receiver.center_x - receiver.boundary_width / 2
+                item.center_y = receiver.center_y
 
-                y_pos -= item.height_half
+                str += self.make_node(item, item.center_x, item.center_y + y_pos)
+                str += self.make_edge(item, receiver)
+            elif sender is not None:
+                item.center_x = sender.center_x + sender.boundary_width / 2
+                item.center_y = sender.center_y
+
+                str += self.make_node(item, item.center_x, item.center_y + y_pos)
+                str += self.make_edge(sender, item, edge_style='Arrow_Edge_Item')
+
+            # Todo: fix this to do auto arrangement for heights of items
+            # y_pos -= item.height_half
 
         return str
 
-    def find_size_and_root_x(self, entity):
+    def find_size_and_root_x(self, entity, parent):
         # Init Graphic variables
         self.init_graphic_variables(entity)
+
         if hasattr(entity, 'end'):
             self.init_graphic_variables(entity.end)
 
         # Set Graphic variables
-        largest_child_width = entity.width # The default size is its size
+        largest_child_width = entity.width  # The default size is its size
         largest_child_height = entity.height
         largest_root_x = entity.width_half
         first_root_x = 0
@@ -210,53 +229,61 @@ class GuiMXGraphBlockDiagram(GuiMXGraph):
             children = [r for r in entity.relation['contains'] if isinstance(r, Contains)]
             for i, c in enumerate(children):
                 child = c.end
-                self.find_size_and_root_x(child)
 
-                # get children's size information
-                largest_child_width = max(child.boundary_width, largest_child_width)
-                largest_child_height = max(child.boundary_height, largest_child_height)
-                largest_root_x = max(child.root_x, largest_root_x)
-                all_child_width += child.boundary_width
-                all_child_height += child.boundary_height
-                if i == 0:
-                    first_root_x = child.root_x
-                elif i == (len(children)-1):
-                    last_root_x = child.root_x
+                # If this is a process derived by an action, this means a decomposed process, so it will be skipped.
+                if child.is_decomposed:
+                    pass
+                else:
+                    self.find_size_and_root_x(child, entity)
+
+                    # get children's size information
+                    largest_child_width = max(child.boundary_width, largest_child_width)
+                    largest_child_height = max(child.boundary_height, largest_child_height)
+                    largest_root_x = max(child.root_x, largest_root_x)
+                    all_child_width += child.boundary_width
+                    all_child_height += child.boundary_height
+                    if i == 0:
+                        first_root_x = child.root_x
+                    elif i == (len(children) - 1):
+                        last_root_x = child.root_x
 
         # find boundary size and root X
         if isinstance(entity, Action):
             entity.boundary_width = entity.width
             entity.boundary_height = entity.height
-            entity.root_x = entity.boundary_width/2
-        elif isinstance(entity, And) or isinstance(entity, Condition) or isinstance(entity, Or):
+            entity.root_x = entity.boundary_width / 2
+        elif isinstance(entity, And) or isinstance(entity, Condition) or isinstance(entity, Or) or isinstance(entity,
+                                                                                                              XOr):
             entity.boundary_width = all_child_width
-            entity.boundary_height = largest_child_height + (entity.height)*2 # itself and its End pair
-            entity.root_x = (all_child_width - last_root_x - first_root_x)/2 + first_root_x
+            entity.boundary_height = largest_child_height + (entity.height) * 2  # itself and its End pair
+            entity.root_x = (all_child_width - last_root_x - first_root_x) / 2 + first_root_x
         elif isinstance(entity, Process) or isinstance(entity, Loop):
             entity.boundary_width = largest_child_width
-            entity.boundary_height = all_child_height + (entity.height)*2 # itself and its End pair
+            entity.boundary_height = all_child_height + (entity.height) * 2  # itself and its End pair
             entity.root_x = largest_root_x
 
         # print(f'{entity.name} boundary_width[{entity.boundary_width}] boundary_height[{entity.boundary_height}] root_x[{entity.root_x}]')
 
     def find_center(self, entity, parent, pre_edge_x, pre_edge_y, list_actions):
-        # print(f'{entity.name}')
 
         # find center_x and center_y
         if isinstance(entity, Action):
-            if 'receives' or 'triggered by' or 'consumes' or 'seizes' in entity.relation:
-                list_actions.append(entity) # list_actions is used for item positioning later
+            # if 'receives' or 'triggered by' or 'consumes' or 'seizes' or 'sends' in entity.relation:
+            #     list_actions.append(entity) # list_actions is used for item positioning later
 
             entity.center_x = parent.center_x
             entity.center_y = pre_edge_y + entity.height_half
-        elif isinstance(entity, And) or isinstance(entity, Condition) or isinstance(entity, Or):
+        elif isinstance(entity, And) or isinstance(entity, Condition) or isinstance(entity, Or) or isinstance(entity,
+                                                                                                              XOr):
             entity.center_x = parent.center_x
             entity.center_y = pre_edge_y + entity.height_half
         elif isinstance(entity, Loop):
             entity.center_x = parent.center_x
-            entity.center_y = pre_edge_y + entity.height_half#parent.center_y + entity.height
+            entity.center_y = pre_edge_y + entity.height_half  # parent.center_y + entity.height
         elif isinstance(entity, Process):
-            if isinstance(parent, And) or isinstance(parent, Condition) or isinstance(parent, Or) or isinstance(parent, Loop):
+            if isinstance(parent, And) or isinstance(parent, Condition) or isinstance(parent, Or) or isinstance(parent,
+                                                                                                                XOr) or isinstance(
+                    parent, Loop):
                 entity.center_x = parent.boundary_x + pre_edge_x + entity.root_x
             else:
                 entity.center_x = pre_edge_x + entity.root_x
@@ -275,17 +302,22 @@ class GuiMXGraphBlockDiagram(GuiMXGraph):
             for i, c in enumerate(children):
                 child = c.end
 
-                child_x, child_y = self.find_center(child, entity, pre_edge_x, pre_edge_y, list_actions)
+                # If this is a process derived by an action, this means a decomposed process, so it will be skipped.
+                if child.is_decomposed:
+                    pass
+                else:
+                    child_x, child_y = self.find_center(child, entity, pre_edge_x, pre_edge_y, list_actions)
 
-                # pre_y += child.center_y
-                pre_edge_x += child.boundary_width
-                pre_edge_y = child_y
+                    # pre_y += child.center_y
+                    pre_edge_x += child.boundary_width
+                    pre_edge_y = child_y
 
         # If there is an End pair.
         if 'pairs' in entity.relation:
             end_entity = entity.relation['pairs'][0].end
             end_entity.center_x = entity.center_x
-            if isinstance(parent, And) or isinstance(parent, Condition) or isinstance(parent, Or):
+            if isinstance(parent, And) or isinstance(parent, Condition) or isinstance(parent, Or) or isinstance(parent,
+                                                                                                                XOr):
                 end_entity.center_y = parent.center_y + parent.boundary_height - parent.height - end_entity.height
             else:
                 end_entity.center_y = entity.center_y + entity.boundary_height - end_entity.height
@@ -296,24 +328,28 @@ class GuiMXGraphBlockDiagram(GuiMXGraph):
         # print(entity.name, entity.center_x, entity.center_y)
         return pre_edge_x, pre_edge_y
 
-    def get_mxgraph(self, entity):
-        entity.numbering('A')
+    def get_mxgraph(self, proc_en):
+        # get flows from the relation 'flow' or 'contains'
+        new_en = proc_en.make_network()
+
+        new_en.numbering('A')
 
         # Set this with a root process flag
-        entity.is_root = True
-        entity.end.is_root = True
+        new_en.is_root = True
+        new_en.end.is_root = True
 
         # 1. Find size and root_x of nodes
-        self.find_size_and_root_x(entity)
+        self.find_size_and_root_x(new_en, None)
 
         # 2. Find center_x and center_y for dynamic entity (e.g., Process, Action, and Condition)
-        list_actions = [] # This is used for item positioning
-        self.find_center(entity, None, 0, 0, list_actions)
+        list_actions = []  # This is used for item positioning
+
+        list_items, _ = new_en.search(class_search=[Item])
+
+        self.find_center(new_en, None, 0, 0, list_actions)
 
         self.mx_nodes = []
-
-        # get flows from the relation 'flow' or 'contains'
-        entity.init_sim_network()
+        str = self.get_mxgraph_string(new_en, new_en.sim_network, list_items)
 
         # print out control flows of UC
-        return self.get_mxgraph_string(entity, entity.sim_network, list_actions)
+        return str
