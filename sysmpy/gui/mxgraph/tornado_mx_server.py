@@ -46,16 +46,18 @@ class DiagramModifyHandler(RequestHandler):
         else :
             print("undefine event(evt)")
 
-        rootEntity = entity_db.get_by_type( Process )[0]
+
+        #rootEntity = entity_db.get_by_type( Process )[0]
         #rootEntity = entity_db.get("Root Process")
 
-        targetData = entity_db.get( evtData )
+        #targetData = entity_db.get( "신규액션1" )
+        targetData = entity_db.get( "Action2" )
 
         entity_db.remove_entity( targetData )
 
         gad = GuiMXGraphActionDiagram()
 
-        my_graph = gad.get_mxgraph( rootEntity )
+        #my_graph = gad.get_mxgraph( rootEntity )
         my_graph = my_graph.replace("/n", "\n")
         self.write(ad_script.mxGraph_start_nice_label + ad_script.mxGraph_styles + my_graph + ad_script.mxGraph_end)
         #self.write( my_graph )
