@@ -7,7 +7,8 @@ import os
 from copy import deepcopy
 import sysmpy.entity_db as entity_db
 from sysmpy.util import *
-
+import requests
+import time
 # ========================================================================= #
 #                                 Entity                                    #
 # ========================================================================= #
@@ -55,6 +56,16 @@ class Entity():
 
     def get_numbered_name(self):
         return f'{self.number} {self.name}'
+
+    def get_name(self, length=None):
+        if length is not None:
+            str = self.name[:length]+'.'
+            return str
+
+        return self.name
+
+    def get_id(self):
+        return f'ID{id(self)}'
 
     def set_decomposition(self, dec):
         """
@@ -111,16 +122,29 @@ class Entity():
     def get_pairs(self):
         if 'pairs' in self.relation:
             pairs = [x.end for x in self.relation['pairs']]
-        return pairs
-
-    def get_pairs_inv(self):
         if 'paired with' in self.inv_relation:
-            paired_with = [x.start for x in self.inv_relation['paired with']]
-        if len(paired_with) == 1:
-            return paired_with[0]
-        return paired_with
+            pairs = [x.start for x in self.inv_relation['paired with']]
+        return pairs[0]
 
-    def search(self, inverse=False, class_search=[]):
+    def search_entity_by_relation(self, relation_class=[], entity_class=[], inverse=False, depth=None):
+        """
+           This returns an entity list by searching a relation list in advance
+           e.g.,)
+           properties = self.search_entity_by_relation(relation_class=[Sends], entity_class=[Property])
+        """
+        _, relation_results = self.search(inverse, class_search=relation_class, depth=depth)
+        results = []
+        for rel in relation_results:
+            if inverse is False:
+                entity_results, _ = rel.end.search(inverse, class_search=entity_class, depth=depth)
+                results += entity_results
+            elif inverse is True:
+                entity_results, _ = rel.start.search(inverse, class_search=entity_class, depth=depth)
+                results += entity_results
+
+        return results
+
+    def search(self, inverse=False, class_search=[], depth=None):
         """
         This returns an entity list and a relation list for this entity using search words
         e.g.,) entity_results, relation_results = self.search(class_search=[Requirement])
@@ -131,16 +155,29 @@ class Entity():
         breaker = []
         entity_results = []
         relation_results = []
-        self.search_op(breaker, '', inverse, class_search, entity_results, relation_results)
+        self.search_op(breaker, '', inverse, class_search, entity_results, relation_results, depth)
 
         return entity_results, relation_results
 
-    def search_op(self, breaker, space, inverse, class_search, entity_results, relation_results):
+    def search_op(self, breaker, space, inverse, class_search, entity_results, relation_results, depth):
+        # The list breaker contains all previous entities that were already used,
+        # so prevent recursive search can be prevented.
         if self in breaker:
             return
+
         breaker.append(self)
+
+        # When reaching the Process END, stop
+        if isinstance(self, Process_END) and self.is_root:
+            return
+
+        # When reaching the predefined depth, stop
+        if depth is not None:
+            if len(space) > depth:
+                return
+
         # print(space + f'{self.name}')
-        # space += '   '
+        space += ' '
 
         # Include this entity class if it is in the search list
         if self.__class__ in class_search:
@@ -156,7 +193,7 @@ class Entity():
                         relation_results.append(rel_ins)
 
                     # Perform recursion
-                    rel_ins.end.search_op(breaker, space, inverse, class_search, entity_results, relation_results)
+                    rel_ins.end.search_op(breaker, space, inverse, class_search, entity_results, relation_results, depth)
         elif inverse is True:
             for rel_name, rel_list in self.inv_relation.items():
                 # print(space + f'rel: {rel_name}')
@@ -167,7 +204,7 @@ class Entity():
                         relation_results.append(rel_ins)
 
                     # Perform recursion
-                    rel_ins.start.search_op(breaker, space, inverse, class_search, entity_results, relation_results)
+                    rel_ins.start.search_op(breaker, space, inverse, class_search, entity_results, relation_results, depth)
 
     def find_root(self):
         """
@@ -988,9 +1025,16 @@ class DynamicEntity(Entity):
                     flows = [x for x in self.relation['flows'] if isinstance(x, Flow)]
 
                     if isinstance(self, Action):
+                        # Perform a function script defined in the script
+                        # If there are no function and the properties of the items associated with the function,
+                        # then the values of the properties are randomly sampled.
                         if self.function is not None:
-                            # Perform a function script for selection
                             selected = self.function(entity_db)
+                        else:
+                            properties = self.search_entity_by_relation(relation_class=[Sends], entity_class=[Property])
+                            for p in properties:
+                                # This property performs the sampling by itself
+                                p.get_random_value()
 
                     if isinstance(self, XOr): # Select only one process
                         selected = random.choice(flows)
@@ -1071,7 +1115,7 @@ class DynamicEntity(Entity):
                     Process.simulation_count += 1
 
                     # Save proper simulation results
-                    proc = self.get_pairs_inv()
+                    proc = self.get_pairs()
 
                     if Process.global_max is None:
                         Process.store_event(self, 'deactivating root process now', info='')
@@ -1310,6 +1354,8 @@ class Process(DynamicEntity):
     simulation_count = 0
     # simulation results are stored in queue
     event_queue = queue.Queue()
+    # is there a web distributor
+    web_distributor = False
 
     def __init__(self, name):
         super().__init__(name)
@@ -1352,7 +1398,6 @@ class Process(DynamicEntity):
                ia.get_absence_items(self), \
                ia.get_unused_items(self)
 
-
     def evaluate_requirements(self):
         """
         This checks all requirements and evaluates them using simulation results
@@ -1367,6 +1412,18 @@ class Process(DynamicEntity):
         actions = entity_db.get_by_type(Action)
         dict_action = {x.name:x.total_time for x in actions}
         return dict_action
+
+    def view(self):
+        """
+        This opens a web browser to show simulation results
+        """
+        if self.properties is not None:
+            property_list = [f"'{x.name}':0" for x in self.properties]
+            prop_str = '{'+", ".join(property_list) + '}'
+            u = f"http://127.0.0.1:9191/chart_view?properties={prop_str}"
+            import webbrowser
+            webbrowser.open(u)
+            time.sleep(1)
 
     ########################################################################
     # staticmethod
@@ -1402,6 +1459,16 @@ class Process(DynamicEntity):
                     print(f'At Time {act.time}, "{act.name}" {event}.')
                     evt = {'class': act.__class__.__name__, 'name': act.name, 'time': act.time, 'event': event}
                     Process.event_queue.put(evt)
+
+                    if Process.web_distributor is True:
+                        root_process = act.get_pairs()
+                        if root_process.properties is not None and len(root_process.properties) > 0:
+                            data = {}
+
+                            for p in root_process.properties:
+                                data[p.name] = p.value
+
+                            Process.send_event_to_web_distributor(data)
             else:
                 if Entity._debug_mode:
                     if event != 'waiting':
@@ -1419,7 +1486,37 @@ class Process(DynamicEntity):
             return None
         return Process.event_queue.get_nowait()
 
-    async def sim(self, until=5):
+    @staticmethod
+    def check_web_distributor():
+        """
+        The web distributor is a web server sending simulation events to the connected clients
+        """
+        try:
+            r = requests.get(f"http://127.0.0.1:9191")
+            Process.web_distributor = True
+            print('The simulation is connected to the web distributor.')
+        except requests.exceptions.RequestException as e:
+            # raise SystemExit(e)
+            Process.web_distributor = False
+
+    @staticmethod
+    def send_event_to_web_distributor(body):
+        """
+        This sends simulation events to the web distributor
+        """
+        try:
+            # sess = requests.Session()
+            # adapter = requests.adapters.HTTPAdapter(pool_connections=100, pool_maxsize=100)
+            # sess.mount('http://', adapter)
+
+            r = requests.get(f"http://127.0.0.1:9191/sim_udpated?g={body}")
+            print("send events to web_distributor", r)
+            time.sleep(0.1)
+        except requests.exceptions.RequestException as e:
+            Process.web_distributor = False
+            raise SystemExit(e)
+
+    async def sim(self, until=5, property_view=False):
         """
         This triggers the simulation.
 
@@ -1437,19 +1534,30 @@ class Process(DynamicEntity):
             Process.global_max = until
 
             # get flows from the relation 'flow' or 'contains'
-            new_en = self.init_sim_network()
+            new_proc = self.init_sim_network()
 
             # print out control flows of UC
             # self.print_flows(self.sim_network)
 
-            workers = [x.run() for x in new_en.sim_network]
-            workers.append(new_en.run())
+            # check whether a web distributor exist or not
+            # The web distributor is a web server sending simulation events to the connected clients
+            new_proc.check_web_distributor()
+
+            # get list of properties which are updated by the simulation
+            new_proc.properties, _ = new_proc.search(class_search=[Property])
+
+            # open a web browser for the property view
+            if property_view is True:
+                new_proc.view()
+
+            workers = [x.run() for x in new_proc.sim_network]
+            workers.append(new_proc.run())
 
             try:
                 res = await asyncio.gather(*workers)
                 print('--------- RM_sim Completed ---------')
 
-                del new_en
+                del new_proc
 
             except asyncio.CancelledError:
                 print('CancelledError')

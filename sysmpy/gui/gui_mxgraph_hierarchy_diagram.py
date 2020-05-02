@@ -225,8 +225,9 @@ class GuiMXGraphHierarchyDiagram(GuiMXGraph):
         # print(entity.name, entity.center_x, entity.center_y)
         return pre_edge_x, pre_edge_y
 
-    def get_mxgraph(self, entity, type=Action):
+    def get_mxgraph(self, entity, width, height, **kwarg):
         entity.numbering('A')
+        type = kwarg['type']
 
         entity_results, relation_results = entity.search(class_search=[type])
 

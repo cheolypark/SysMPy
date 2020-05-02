@@ -7,6 +7,8 @@ from IPython.display import HTML
 from sysmpy.gui.gui_mxgraph_action_diagram import GuiMXGraphActionDiagram
 from sysmpy.gui.gui_mxgraph_block_diagram import GuiMXGraphBlockDiagram
 from sysmpy.gui.gui_mxgraph_hierarchy_diagram import GuiMXGraphHierarchyDiagram
+from sysmpy.gui.gui_chart_property import GuiChartProperty
+
 import urllib
 
 # This removes all warning messages in the Jupyter notebook.
@@ -17,21 +19,25 @@ logging.disable()
 # from sysmpy.gui.mxgraph.flask2 import start_server
 # start_server()
 
-from sysmpy.gui.mxgraph.flask_socket_server import start_server
-start_server()
+# from sysmpy.gui.mxgraph.flask_socket_server import start_server
+# start_server()
 
-def show(p, width=960, height=750, diagram='AD', type=Action):
+def show(p, width=960, height=750, diagram='AD', **kwarg):
+    diagram = diagram.lower()
+    # print(diagram)
 
-    if diagram == 'AD':
+    if diagram == 'ad': # Action Diagram
         graph = GuiMXGraphActionDiagram().get_mxgraph(p)
-    elif diagram == 'BD':
-        graph = GuiMXGraphBlockDiagram().get_mxgraph(p)
-    elif diagram == 'HD':
-        graph = GuiMXGraphHierarchyDiagram().get_mxgraph(p, type)
+    elif diagram == 'bd': # Block Diagram
+        graph = GuiMXGraphBlockDiagram().get_mxgraph(p, width, height)
+    elif diagram == 'hd': # Hierarchy Diagram
+        graph = GuiMXGraphHierarchyDiagram().get_mxgraph(p, width, height, kwarg)
+    elif diagram == 'pc': # Property Chart View
+        graph = GuiChartProperty().get_chart_info(p, width, height)
 
     # print(graph)
 
-    src = "http://127.0.0.1:9191/?g=" + graph
+    src = f"http://127.0.0.1:9191/{diagram}?g={graph}"
 
     # parsed_html = urllib.parse.quote(src, safe="~@#$&()*!+=:;,.?/\'")
     # print(src)
