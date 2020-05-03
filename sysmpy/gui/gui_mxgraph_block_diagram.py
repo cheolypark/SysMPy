@@ -84,9 +84,7 @@ class GuiMXGraphBlockDiagram(GuiMXGraph):
         # We use '/8/' to substitute for ';', because the tornado has a problem with ';', when the GET request is used.
         # var c31 = graph.insertVertex(c3,null,'', 0,0,100,50,'ProcessImage;image=images/img3.png;');
         # node = f"graph.insertVertex({id_parent}, null, '', 0, 0, {node_width}, {node_height}, '{style_image}//image=images/{name}.png') /n "
-        # img_url = 'https://image.flaticon.com/icons/svg/2521/2521610.svg'
-        img_url = 'E:/SW-SysMPy/SysMPyUseCases/AGC/NoteBook/img2.png'
-        img_url = f'http://127.0.0.1:9191/src/default_images/{name}.png'
+        img_url = f'http://127.0.0.1:9191/images/{name}.png'
         node = f"graph.insertVertex({id_parent}, null, '', 0, 0, {node_width}, {node_height}, '{style_image}/8/image={img_url}') /n "
 
         #

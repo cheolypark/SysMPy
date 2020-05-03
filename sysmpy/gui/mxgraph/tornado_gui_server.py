@@ -153,14 +153,18 @@ class GuiSocketHandler(tornado.websocket.WebSocketHandler):
 
 
 class Application(tornado.web.Application):
-    def __init__(self):
+    def __init__(self, images_path=None):
         define("port", default=9191, help="run on the given port", type=int)
+
+        if images_path is None:
+            images_path = 'E:/SW-SysMPy/SysMPy/examples/NotebookExample/CyberFactory/images'
 
         handlers = [(r"/", MainHandler),
                     (r'/src/js/(.*)', StaticFileHandler, {'path': './src/js'}),
                     (r'/src/css/(.*)', StaticFileHandler, {'path': './src/css'}),
                     (r'/src/images/(.*)', StaticFileHandler, {'path': './src/images'}),
-                    (r'/src/default_images/(.*)', StaticFileHandler, {'path': './src/default_images'}),
+                    # (r'/src/default_images/(.*)', StaticFileHandler, {'path': './src/default_images'}),
+                    (r'/images/(.*)', StaticFileHandler, {'path': images_path}),
                     (r"/pc/", PropertyChartHandler),
                     (r"/ad/", ActionDiagramHandler),
                     (r"/bd/", BlockDiagramHandler),
@@ -177,8 +181,8 @@ class Application(tornado.web.Application):
         super(Application, self).__init__(handlers, **settings)
 
 
-def TornadoGuiServer():
-    app = Application()
+def TornadoGuiServer(images_path=None):
+    app = Application(images_path)
     http_server = tornado.httpserver.HTTPServer(app, max_header_size=1024 ** 3)
 
     try:
@@ -194,6 +198,10 @@ def TornadoGuiServer():
         print('We use the existing tornado server!')
 
 
+def RunServer():
+    notebook_path = os.path.abspath('')+'/images'
+    print(notebook_path)
+    TornadoGuiServer(images_path=notebook_path+'/images')
 
-if __name__ == "__main__":
-    TornadoGuiServer()
+# if __name__ == "__main__":
+#     TornadoGuiServer(images_path=None)
