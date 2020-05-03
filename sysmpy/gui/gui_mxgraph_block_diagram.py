@@ -13,7 +13,7 @@ class GuiMXGraphBlockDiagram(GuiMXGraph):
     def init_graphic_variables(self, entity):
         entity.margin_x = 0
         entity.margin_y = 0
-        entity.node_width = 100
+        entity.node_width = 150
         entity.node_height = 100
 
         entity.boundary_width = 0
@@ -39,6 +39,7 @@ class GuiMXGraphBlockDiagram(GuiMXGraph):
         node_height = en.node_height
         label = en.name
         id = en.get_id()
+        name = en.get_name_with_parent()
 
         if isinstance(en, Process):
             pass
@@ -66,23 +67,29 @@ class GuiMXGraphBlockDiagram(GuiMXGraph):
             # var c36 = graph.insertVertex(c3,null,':', 0,0,100,30,'Property');
             # var c37 = graph.insertVertex(c36,null,'Temp', 0,0,50,30,'Property');
             # var c38 = graph.insertVertex(c36,null,'2', 50,0,50,30,'Property');
-            node = f"var {id} = graph.insertVertex(parent, null, '{label}', {x}, {y}, {node_width}, {node_height}, '{type(en).__name__}') /n "
+            node = f"var {id} = graph.insertVertex(parent, '{name}', '{label}', {x}, {y}, {node_width}, {node_height}, '{type(en).__name__}') /n "
 
         return node, node_height
 
     def make_image(self, parent):
         node_width = parent.node_width
         node_height = parent.node_height - 30
-        id = parent.get_id()
+        id_parent = parent.get_id()
         name = parent.name
 
         style_image = 'ProcessImage'
         if isinstance(parent, Item):
             style_image = 'ItemImage'
 
+        # We use '/8/' to substitute for ';', because the tornado has a problem with ';', when the GET request is used.
         # var c31 = graph.insertVertex(c3,null,'', 0,0,100,50,'ProcessImage;image=images/img3.png;');
-        node = f"graph.insertVertex({id}, null, '', 0, 0, {node_width}, {node_height}, '{style_image};image=images/{name}.png') /n "
+        # node = f"graph.insertVertex({id_parent}, null, '', 0, 0, {node_width}, {node_height}, '{style_image}//image=images/{name}.png') /n "
+        # img_url = 'https://image.flaticon.com/icons/svg/2521/2521610.svg'
+        img_url = 'E:/SW-SysMPy/SysMPyUseCases/AGC/NoteBook/img2.png'
+        img_url = f'http://127.0.0.1:9191/src/default_images/{name}.png'
+        node = f"graph.insertVertex({id_parent}, null, '', 0, 0, {node_width}, {node_height}, '{style_image}/8/image={img_url}') /n "
 
+        #
         return node
 
     def make_action(self, parent, en):
@@ -98,19 +105,22 @@ class GuiMXGraphBlockDiagram(GuiMXGraph):
 
     def make_property(self, parent, en):
         node_width = parent.node_width
-        node_height = 30
+        node_height = 20
         label = en.get_name(5)
         id_parent = parent.get_id()
+        name = en.get_name_with_parent()
         id = en.get_id()
-
+        id_p = id + '_p'
+        id_k = id + '_k'
+        id_v = id + '_v'
         # var c36 = graph.insertVertex(c3,null,':', 0,0,100,30,'property');
         # var c37 = graph.insertVertex(c36,null,'Temp', 0,0,50,30,'property');
         # var c38 = graph.insertVertex(c36,null,'2', 50,0,50,30,'property');
 
         node = ''
-        node += f"var {id} = graph.insertVertex({id_parent}, null, ':', 0, 0, {node_width}, {node_height}, 'Property') /n "
-        node += f"var {id+'_k'} = graph.insertVertex({id}, null, '{label}', 0, 0, {node_width/2}, {node_height}, 'Property') /n "
-        node += f"var {id+'_v'} = graph.insertVertex({id}, null, 'null', {node_width/2}, 0, {node_width/2}, {node_height}, 'Property') /n "
+        node += f"var {id_p} = graph.insertVertex({id_parent}, null, '', 0, 0, {node_width}, {node_height}, 'Property') /n "
+        node += f"var {id_k} = graph.insertVertex({id_p}, null, '{label}', 0, 0, {node_width/2}, {node_height}, 'Property') /n "
+        node += f"var {id_v} = graph.insertVertex({id_p}, '{name}', 'null', {node_width/2}, 0, {node_width/2}, {node_height}, 'Property') /n "
 
         return node, node_height
 
@@ -153,7 +163,7 @@ class GuiMXGraphBlockDiagram(GuiMXGraph):
         # print(edge)
         return edge
 
-    def get_mxgraph_string(self, proc_en, view_width=600):
+    def get_mxgraph_string(self, proc_en, view_width=600, hide_no_action_process=False):
         # 1. Find Process
         list_processes, _ = proc_en.search(class_search=[Process])
 
@@ -173,6 +183,14 @@ class GuiMXGraphBlockDiagram(GuiMXGraph):
         # For each process, make an MXGraph script
         for proc in list_processes:
 
+            # Search actions of this process
+            list_actions, _ = proc.search(class_search=[Action], depth=1)
+
+            # If the view state is hide_no_action_process, then skip this process
+            if hide_no_action_process is True:
+                if len(list_actions) == 0:
+                    continue
+
             # Generate graphical variables (e.g., height) for this process
             self.init_graphic_variables(proc)
 
@@ -183,9 +201,6 @@ class GuiMXGraphBlockDiagram(GuiMXGraph):
 
             # Make an MXGraph script for the image of this process
             str += self.make_image(proc)
-
-            # Search actions of this process
-            list_actions, _ = proc.search(class_search=[Action], depth=1)
 
             # For each action, make an MXGraph script
             for action in list_actions:
@@ -259,7 +274,15 @@ class GuiMXGraphBlockDiagram(GuiMXGraph):
         return str
 
 
-    def get_mxgraph(self, proc_en, width, height):
+    def get_mxgraph(self, proc_en, width, height, kwarg=None):
+        """
+        :param proc_en:
+        :param width:
+        :param height:
+        :param kwarg:
+        if Hide_No_Action_Process=True, the process without actions will be ignored for display
+        :return:
+        """
         # Copy a new process entity using the original process entity
         new_en = deepcopy(proc_en)
 
@@ -270,11 +293,17 @@ class GuiMXGraphBlockDiagram(GuiMXGraph):
         new_en.is_root = True
         new_en.end.is_root = True
 
+        # Check whether the process without actions is shown or not
+        hide_no_action_process = False
+
+        if kwarg is not None and 'Hide_No_Action_Process' in kwarg:
+            hide_no_action_process = kwarg['Hide_No_Action_Process']
+
         # Adjust the view boundary
         boundary_width = 100
         width -= boundary_width
 
         # Generate the block diagram
-        str = self.get_mxgraph_string(new_en, view_width=width)
+        str = self.get_mxgraph_string(new_en, view_width=width, hide_no_action_process=hide_no_action_process)
 
         return str

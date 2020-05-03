@@ -8,13 +8,18 @@ class GuiChartProperty():
         pass
 
     def get_chart_info(self, proc_en, width, height):
-        new_proc = proc_en.make_network()
+        # Copy a new process entity using the original process entity
+        new_en = deepcopy(proc_en)
+
+        # Set this with a root process flag
+        new_en.is_root = True
+        new_en.end.is_root = True
 
         # get list of properties which are updated by the simulation
-        new_proc.properties, _ = new_proc.search(class_search=[Property])
+        new_en.properties, _ = new_en.search(class_search=[Property])
 
-        if new_proc.properties is not None:
-            property_list = [f"'{x.name}':0" for x in new_proc.properties]
+        if new_en.properties is not None:
+            property_list = [f"'{x.get_name_with_parent()}':0" for x in new_en.properties]
             prop_str = '{' + ", ".join(property_list) + '}'
             return prop_str
 

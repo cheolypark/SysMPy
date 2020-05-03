@@ -1,15 +1,22 @@
-from sysmpy import *
-import asyncio
-from gui_mxgraph_action_diagram import GuiMXGraphActionDiagram
-from gui_mxgraph_block_diagram import GuiMXGraphBlockDiagram
-from gui_mxgraph_hierarchy_diagram import GuiMXGraphHierarchyDiagram
+data = {'school':'DAV', 'class': '7', 'name': 'abc', 'city': 'pune'}
 
-main_p = Process('process')
-p = main_p.Loop('p1', times=2)
-p1, p2, p3, p4 = p.And('가열로', '압연', '냉각', '교정')
-ht = p1.Action('가열')
-rm = p2.Action('압연')
-cl = p3.Action('냉각')
-md = p4.Action('교정')
 
-print(GuiMXGraphActionDiagram().get_mxgraph(p))
+def my_function(**data):
+    def my_function2(data):
+        print(data['school'])
+
+    my_function2(data)
+
+
+# def my_function(x=1, **data):
+#     def my_function2(x=1, **data):
+#         print(x)
+#
+#     my_function2(x, data)
+
+    # schoolname  = data['school']
+    # cityname = data['city']
+    # standard = data['class']
+    # studentname = data['name']
+
+my_function(school='DAV')

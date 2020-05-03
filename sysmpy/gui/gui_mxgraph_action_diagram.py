@@ -226,7 +226,7 @@ class GuiMXGraphActionDiagram(GuiMXGraph):
         all_child_height = 0
 
         if 'contains' in entity.relation:
-            children = [r for r in entity.relation['contains'] if isinstance(r, Contains)]
+            children = [r for r in entity.relation['contains'] if isinstance(r, Contains) and not isinstance(r.end, Property)]
             for i, c in enumerate(children):
                 child = c.end
 
@@ -294,7 +294,7 @@ class GuiMXGraphActionDiagram(GuiMXGraph):
         pre_edge_y = entity.center_y + entity.height_half
 
         if 'contains' in entity.relation:
-            children = [r for r in entity.relation['contains'] if isinstance(r, Contains)]
+            children = [r for r in entity.relation['contains'] if isinstance(r, Contains) and not isinstance(r.end, Property)]
             for i, c in enumerate(children):
                 child = c.end
 
@@ -326,6 +326,8 @@ class GuiMXGraphActionDiagram(GuiMXGraph):
     def get_mxgraph(self, proc_en):
         # get flows from the relation 'flow' or 'contains'
         new_en = proc_en.make_network()
+
+        test, _ = new_en.search(class_search=[Property])
 
         new_en.numbering('A')
 

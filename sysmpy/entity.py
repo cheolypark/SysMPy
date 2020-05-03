@@ -7,8 +7,10 @@ import os
 from copy import deepcopy
 import sysmpy.entity_db as entity_db
 from sysmpy.util import *
+import sysmpy.util as util
 import requests
 import time
+
 # ========================================================================= #
 #                                 Entity                                    #
 # ========================================================================= #
@@ -19,10 +21,11 @@ class Entity():
 
     _debug_mode = False
 
-    def __init__(self, name, number=None, description=None):
+    def __init__(self, name, number=None, description=None, parent=None):
         self.name = name
         self.number = number
         self.description = description
+        self.parent = parent
         self.relation = {}      # Relation
         self.inv_relation = {}  # Inverse Relation
         self.sim_with_decomposition = True
@@ -57,6 +60,11 @@ class Entity():
     def get_numbered_name(self):
         return f'{self.number} {self.name}'
 
+    def get_name_with_parent(self):
+        if self.parent is not None:
+            return f'{self.parent.name}.{self.name}'
+        return f'{self.name}'
+
     def get_name(self, length=None):
         if length is not None:
             str = self.name[:length]+'.'
@@ -80,7 +88,7 @@ class Entity():
     # !start with an uppercase letter
     #
     def Property(self, name, range=None, value=None):
-        obj = Property(name, range, value)
+        obj = Property(name, range, value, parent=self)
         obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
         Contains(self, obj)
@@ -176,7 +184,7 @@ class Entity():
             if len(space) > depth:
                 return
 
-        # print(space + f'{self.name}')
+        # print_out(space + f'{self.name}')
         space += ' '
 
         # Include this entity class if it is in the search list
@@ -185,7 +193,7 @@ class Entity():
 
         if inverse is False:
             for rel_name, rel_list in self.relation.items():
-                # print(space + f'rel: {rel_name}')
+                # print_out(space + f'rel: {rel_name}')
 
                 for rel_ins in rel_list:
                     # Include this relation class if it is in the search list
@@ -196,7 +204,7 @@ class Entity():
                     rel_ins.end.search_op(breaker, space, inverse, class_search, entity_results, relation_results, depth)
         elif inverse is True:
             for rel_name, rel_list in self.inv_relation.items():
-                # print(space + f'rel: {rel_name}')
+                # print_out(space + f'rel: {rel_name}')
 
                 for rel_ins in rel_list:
                     # Include this relation class if it is in the search list
@@ -288,8 +296,8 @@ class Entity():
 class StaticEntity(Entity):
     """ This is an abstract class regarding Static Entity"""
 
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self, name, parent=None):
+        super().__init__(name, parent=parent)
 
     def __str__(self):
         str = self.name
@@ -320,7 +328,7 @@ class StaticEntity(Entity):
 #                                Property                                   #
 # ========================================================================= #
 class Property(StaticEntity):
-    def __init__(self, name, range=None, value=None):
+    def __init__(self, name, range=None, value=None, parent=None):
         """
         :param name: e.g., ) 'X'
         :param range: e.g., ) 'Less(10)', 'More(10)', 'Between(1, 10)',
@@ -328,7 +336,7 @@ class Property(StaticEntity):
         ['Between(1, 10)', 'Between(30, 40)']
         :param value: e.g., ) 'T', 10
         """
-        super().__init__(name)
+        super().__init__(name, parent=parent)
         self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         self.range = range
         self.value = value
@@ -336,6 +344,9 @@ class Property(StaticEntity):
     def get_random_value(self):
         if isinstance(self.range, list):
             self.value = random.choice(self.range)
+            return self.value
+        else:
+            self.value = self.range.get_random_value()
             return self.value
 
     def get_one(self):
@@ -348,8 +359,8 @@ class Property(StaticEntity):
 #                                  Item                                     #
 # ========================================================================= #
 class Item(StaticEntity):
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self, name, parent=None):
+        super().__init__(name, parent=parent)
         self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         self.attr = {}
 
@@ -369,8 +380,8 @@ class Conduit(StaticEntity):
     Conduit is associated with items.
     """
 
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self, name, parent=None):
+        super().__init__(name, parent=parent)
         self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         self._capacity = 1
         self._delay = 0
@@ -405,8 +416,8 @@ class Conduit(StaticEntity):
 #                                  Resource                                 #
 # ========================================================================= #
 class Resource(StaticEntity):
-    def __init__(self, name, amount=10, minimum=1, maximum=10, units=None):
-        super().__init__(name)
+    def __init__(self, name, amount=10, minimum=1, maximum=10, units=None, parent=None):
+        super().__init__(name, parent=parent)
         self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         self.amount = amount
         self.minimum = minimum
@@ -418,8 +429,8 @@ class Resource(StaticEntity):
 #                                Requirement                                #
 # ========================================================================= #
 class Requirement(Property):
-    def __init__(self, name, range=None, value=None, **kwargs):
-        super().__init__(name, range, value)
+    def __init__(self, name, range=None, value=None, parent=None, **kwargs):
+        super().__init__(name, range, value, parent=parent)
         self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         self.kwargs = kwargs
         self.is_root = True
@@ -430,14 +441,13 @@ class Requirement(Property):
             l = {r.name:r.value for r in rel}
             is_passed = 'passed' if rel[0].value in self.range else 'failed'
             str = f'{self.name} Range is {self.range}: {l} {is_passed}'
-            print(str)
 
     ########################################################################
     # Class Creation Methods
     # !start with an uppercase letter
     #
     def Requirement(self, name, range=None, value=None, **kwargs):
-        obj = Requirement(name, range, value, **kwargs)
+        obj = Requirement(name, range, value, parent=self, **kwargs)
         obj.is_root = False
         obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
@@ -462,8 +472,8 @@ class Requirement(Property):
 #                                Component                                  #
 # ========================================================================= #
 class Component(StaticEntity):
-    def __init__(self, name, **kwargs):
-        super().__init__(name)
+    def __init__(self, name, parent=None, **kwargs):
+        super().__init__(name, parent=parent)
         self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         self.kwargs = kwargs
         self.is_root = True
@@ -480,7 +490,7 @@ class Component(StaticEntity):
     # !start with an uppercase letter
     #
     def Component(self, name, **kwargs):
-        obj = Component(name, **kwargs)
+        obj = Component(name, parent=self, **kwargs)
         obj.is_root = False
         obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
@@ -494,8 +504,8 @@ class Component(StaticEntity):
 class DynamicEntity(Entity):
     """ This is an abstract class regarding Dynamic Entity"""
 
-    def __init__(self, name, duration=0):
-        super().__init__(name)
+    def __init__(self, name, duration=0, parent=None):
+        super().__init__(name, parent=parent)
         self.duration = duration
         self.time = 0
         self.total_time = 0
@@ -656,13 +666,13 @@ class DynamicEntity(Entity):
         """
 
         if 'contains' in self.relation:
-            contains = [x.end for x in self.relation['contains']]
+            contains = [x.end for x in self.relation['contains'] if not isinstance(x.end, Property)] # Property does not belong to the simulation network
             if contains is not None:
                 entities += contains
                 cur_e = None
                 last_e = []
                 for e in contains:
-
+                    # if not isinstance(e, Property): # Property does not belong to the simulation network
                     if isinstance(self, And) or isinstance(self, Or) or isinstance(self, XOr) or isinstance(self, Condition):
                         # If e is not 'or' or 'and', then make a parallel flow
                         self.flow(e)
@@ -933,8 +943,8 @@ class DynamicEntity(Entity):
             #
             ##################################################################################
             # if self.name == 'A':
-            #     print(self.name, b_flow_fire, b_seizes_fire, b_consumes_fire, b_triggered_fire)
-            #     print('!')
+            #     print_out(self.name, b_flow_fire, b_seizes_fire, b_consumes_fire, b_triggered_fire)
+            #     print_out('!')
 
             if b_flow_fire and b_seizes_fire and b_consumes_fire and b_triggered_fire:
                 ########################################################################
@@ -1088,13 +1098,29 @@ class DynamicEntity(Entity):
                             x.sent = True
 
                 ########################################################################
-                # Check 8: Complete this process
+                # Check 8: Properties for a process
+                # A process can have properties which can be sampled, when the process was ended.
+                if isinstance(self, Process_END):
+                    proc = self.get_pairs()
+
+                    if proc.function is not None:
+                        selected = proc.function(entity_db)
+                    else:
+                        # Search properties of this process
+                        list_properties, _ = proc.search(class_search=[Property], depth=1)
+
+                        for p in list_properties:
+                            # This property performs the sampling by itself
+                            p.get_random_value()
+
+                ########################################################################
+                # Check 9: Complete this process
                 self.time += self.duration
                 self.total_time += self.duration
                 Process.store_event(self, 'completed', info='')
 
                 ########################################################################
-                # Check 9: Resources Seizes
+                # Check 10: Resources Seizes
                 # Release all seized resources
                 if seizes_true is not None:
                     for r in seizes_true:
@@ -1106,7 +1132,7 @@ class DynamicEntity(Entity):
                         Process.store_event(self, 'releases resources', info=f'[{s}]')
 
                 ########################################################################
-                # Check 10: One iteration of the root process was done
+                # Check 11: One iteration of the root process was done
                 if isinstance(self, Process_END) and self.is_root:
                     # Process.store_event(self, 'decomposes done as the root process', info='')
                     Process.store_event(self, f'simulation {Process.simulation_count}', info='')
@@ -1134,8 +1160,8 @@ class Action(DynamicEntity):
     """
     Action Dynamic Entity
     """
-    def __init__(self, name, duration=1):
-        super().__init__(name, duration)
+    def __init__(self, name, duration=1, parent=None):
+        super().__init__(name, duration, parent=parent)
         self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
     ########################################################################
@@ -1143,7 +1169,7 @@ class Action(DynamicEntity):
     # !start with an uppercase letter
     #
     def Process(self, name):
-        obj = Process(name)
+        obj = Process(name, parent=self)
         obj.is_root = False
         obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
@@ -1151,7 +1177,7 @@ class Action(DynamicEntity):
 
         # This action decomposes a sub-process
         # Consequently, this action will have the 'Action_end'
-        self.end = Action_END(self.name + '_END')
+        self.end = Action_END(self.name + '_END', parent=self)
 
         # Link this and the end using the relation 'Pairs'
         Pairs(self, self.end)
@@ -1160,8 +1186,8 @@ class Action(DynamicEntity):
 
 
 class Action_END(DynamicEntity):
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self, name, parent=None):
+        super().__init__(name, parent=parent)
 
 
 # ========================================================================= #
@@ -1171,12 +1197,12 @@ class And(DynamicEntity):
     """
     And Dynamic Entity
     """
-    def __init__(self, name='and'):
-        super().__init__(name)
+    def __init__(self, name='and', parent=None):
+        super().__init__(name, parent=parent)
         self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
         # This decomposes a pair dynamic entity called 'end' or name+'_END'
-        self.end = And_END(name + '_END')
+        self.end = And_END(name + '_END', parent=parent)
 
         # Link this and the end using the relation 'Pairs'
         Pairs(self, self.end)
@@ -1186,7 +1212,7 @@ class And(DynamicEntity):
     # !start with an uppercase letter
     #
     def Process(self, name):
-        obj = Process(name)
+        obj = Process(name, parent=self)
         obj.is_root = False
         obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
@@ -1195,8 +1221,8 @@ class And(DynamicEntity):
 
 
 class And_END(DynamicEntity):
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self, name, parent=None):
+        super().__init__(name, parent=parent)
 
 
 # ========================================================================= #
@@ -1206,12 +1232,12 @@ class Or(DynamicEntity):
     """
     Or Dynamic Entity
     """
-    def __init__(self, name='or'):
-        super().__init__(name)
+    def __init__(self, name='or', parent=None):
+        super().__init__(name, parent=parent)
         self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
         # This decomposes a pair dynamic entity called 'end' or name+'_END'
-        self.end = Or_END(name + '_END')
+        self.end = Or_END(name + '_END', parent=parent)
 
         # Link this and the end using the relation 'Pairs'
         Pairs(self, self.end)
@@ -1221,7 +1247,7 @@ class Or(DynamicEntity):
     # !start with an uppercase letter
     #
     def Process(self, name):
-        obj = Process(name)
+        obj = Process(name, parent=self)
         obj.is_root = False
         obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
@@ -1230,8 +1256,8 @@ class Or(DynamicEntity):
 
 
 class Or_END(DynamicEntity):
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self, name, parent=None):
+        super().__init__(name, parent=parent)
 
 
 # ========================================================================= #
@@ -1242,12 +1268,12 @@ class XOr(DynamicEntity):
     XOr Dynamic Entity
     """
 
-    def __init__(self, name='xor'):
-        super().__init__(name)
+    def __init__(self, name='xor', parent=None):
+        super().__init__(name, parent=parent)
         self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
         # This decomposes a pair dynamic entity called 'end' or name+'_END'
-        self.end = XOr_END(name + '_END')
+        self.end = XOr_END(name + '_END', parent=parent)
 
         # Link this and the end using the relation 'Pairs'
         Pairs(self, self.end)
@@ -1257,7 +1283,7 @@ class XOr(DynamicEntity):
     # !start with an uppercase letter
     #
     def Process(self, name):
-        obj = Process(name)
+        obj = Process(name, parent=self)
         obj.is_root = False
         obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
@@ -1266,8 +1292,8 @@ class XOr(DynamicEntity):
 
 
 class XOr_END(DynamicEntity):
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self, name, parent=None):
+        super().__init__(name, parent=parent)
 
 
 # ========================================================================= #
@@ -1278,12 +1304,12 @@ class Condition(DynamicEntity):
     Condition Dynamic Entity
     """
 
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self, name, parent=None):
+        super().__init__(name, parent=parent)
         self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
         # This decomposes a pair dynamic entity called 'end' or name+'_END'
-        self.end = Condition_END(name + '_END')
+        self.end = Condition_END(name + '_END', parent=parent)
 
         # Link this and the end using the relation 'Pairs'
         Pairs(self, self.end)
@@ -1293,7 +1319,7 @@ class Condition(DynamicEntity):
     # !start with an uppercase letter
     #
     def Process(self, name):
-        obj = Process(name)
+        obj = Process(name, parent=self)
         obj.is_root = False
         obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
@@ -1302,8 +1328,8 @@ class Condition(DynamicEntity):
 
 
 class Condition_END(DynamicEntity):
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self, name, parent=None):
+        super().__init__(name, parent=parent)
 
     def reset_waiting(self):
         super().reset_waiting()
@@ -1317,8 +1343,8 @@ class END(DynamicEntity):
     END Dynamic Entity
     """
 
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self, name, parent=None):
+        super().__init__(name, parent=parent)
         self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
     def reset_waiting(self):
@@ -1329,8 +1355,8 @@ class END(DynamicEntity):
 #                                 ExitLoop                                  #
 # ========================================================================= #
 class ExitLoop(DynamicEntity):
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self, name, parent=None):
+        super().__init__(name, parent=parent)
 
     def reset_waiting(self):
         super().reset_waiting()
@@ -1357,8 +1383,8 @@ class Process(DynamicEntity):
     # is there a web distributor
     web_distributor = False
 
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self, name, parent=None):
+        super().__init__(name, parent=parent)
         # Find a module which is using this class
         # and set the caller's path to this class, so we can know where this object came form:
         # - last element ([-1]) is me, the one before ([-2]) is my caller.
@@ -1370,7 +1396,7 @@ class Process(DynamicEntity):
             self.is_root = True
 
             # This decomposes a pair dynamic entity called 'end' or name+'_END'
-            self.end = Process_END(name + '_END')
+            self.end = Process_END(name + '_END', parent=parent)
 
             # Link this and the end using the relation 'Pairs'
             Pairs(self, self.end)
@@ -1405,7 +1431,7 @@ class Process(DynamicEntity):
 
         entity_results, relation_results = self.search(class_search=[Requirement])
         for e in entity_results:
-            # print(e)
+            # print_out(e)
             e.check_property()
 
     def get_action_times(self):
@@ -1433,9 +1459,9 @@ class Process(DynamicEntity):
     def store_event(act, event, info=''):
         if Entity._debug_mode:
             if len(info) == 0:
-                print(f'T: {act.time}, N: {act.name}, E: {event}')
+                print_out(f'T: {act.time}, N: {act.name}, E: {event}')
             else:
-                print(f'T: {act.time}, N: {act.name}, E: {event}, I: {info}')
+                print_out(f'T: {act.time}, N: {act.name}, E: {event}, I: {info}')
         else:
             # Ignore unnecessary entities
             if isinstance(act, And) or \
@@ -1456,7 +1482,7 @@ class Process(DynamicEntity):
                 if event != 'waiting' and \
                    event != 'activated' and \
                    event != 'completed' :
-                    print(f'At Time {act.time}, "{act.name}" {event}.')
+                    print_out(f'At Time {act.time}, "{act.name}" {event}.')
                     evt = {'class': act.__class__.__name__, 'name': act.name, 'time': act.time, 'event': event}
                     Process.event_queue.put(evt)
 
@@ -1466,17 +1492,17 @@ class Process(DynamicEntity):
                             data = {}
 
                             for p in root_process.properties:
-                                data[p.name] = p.value
+                                data[p.get_name_with_parent()] = p.value
 
                             Process.send_event_to_web_distributor(data)
             else:
                 if Entity._debug_mode:
                     if event != 'waiting':
-                        print(f'At Time {act.time}, "{act.name}" {event}.')
+                        print_out(f'At Time {act.time}, "{act.name}" {event}.')
                         evt = {'class':act.__class__.__name__, 'name': act.name, 'time': act.time, 'event': event}
                         Process.event_queue.put(evt)
                 else:
-                    print(f'At Time {act.time}, "{act.name}" {event}.')
+                    print_out(f'At Time {act.time}, "{act.name}" {event}.')
                     evt = {'class': act.__class__.__name__, 'name': act.name, 'time': act.time, 'event': event}
                     Process.event_queue.put(evt)
 
@@ -1494,7 +1520,7 @@ class Process(DynamicEntity):
         try:
             r = requests.get(f"http://127.0.0.1:9191")
             Process.web_distributor = True
-            print('The simulation is connected to the web distributor.')
+            print_out('The simulation is connected to the web distributor.')
         except requests.exceptions.RequestException as e:
             # raise SystemExit(e)
             Process.web_distributor = False
@@ -1508,15 +1534,15 @@ class Process(DynamicEntity):
             # sess = requests.Session()
             # adapter = requests.adapters.HTTPAdapter(pool_connections=100, pool_maxsize=100)
             # sess.mount('http://', adapter)
-
-            r = requests.get(f"http://127.0.0.1:9191/sim_udpated?g={body}")
-            print("send events to web_distributor", r)
+            sim_url = f"http://127.0.0.1:9191/sim_updated?g={body}"
+            r = requests.get(sim_url)
+            print_out("send events to web_distributor", r)
             time.sleep(0.1)
         except requests.exceptions.RequestException as e:
             Process.web_distributor = False
             raise SystemExit(e)
 
-    async def sim(self, until=5, property_view=False):
+    async def sim(self, until=5, property_view=False, print_out=False):
         """
         This triggers the simulation.
 
@@ -1524,6 +1550,8 @@ class Process(DynamicEntity):
         until: The maximum time, modeled in the process flows, for simulation run
         If until is None, the simulation performs just one time.
         """
+
+        util.is_print_out = print_out
 
         # Find other flows and set them into asyncio
         if 'flows' or 'contains' in self.relation:
@@ -1555,7 +1583,7 @@ class Process(DynamicEntity):
 
             try:
                 res = await asyncio.gather(*workers)
-                print('--------- RM_sim Completed ---------')
+                print('--------- Simulation Completed ---------')
 
                 del new_proc
 
@@ -1573,14 +1601,14 @@ class Process(DynamicEntity):
         :param duration: The time modeled in the process flows
         :return:
         """
-        obj = Action(name, duration)
+        obj = Action(name, duration, parent=self)
         obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
         Contains(self, obj)
         return obj
 
     def And(self, *args):
-        obj = And()
+        obj = And(parent=self)
         obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
         Contains(self, obj)
@@ -1594,7 +1622,7 @@ class Process(DynamicEntity):
         return obj
 
     def Or(self, *args):
-        obj = Or()
+        obj = Or(parent=self)
         obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
         Contains(self, obj)
@@ -1608,7 +1636,7 @@ class Process(DynamicEntity):
         return obj
 
     def XOr(self, *args):
-        obj = XOr()
+        obj = XOr(parent=self)
         obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
         Contains(self, obj)
@@ -1622,14 +1650,14 @@ class Process(DynamicEntity):
         return obj
 
     def Loop(self, name, times=2):
-        obj = Loop(name=name, times=times)
+        obj = Loop(name=name, times=times, parent=self)
         obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
         Contains(self, obj)
         return obj
 
     def Condition(self, name, *args):
-        obj = Condition(name=name)
+        obj = Condition(name=name, parent=self)
         obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
         Contains(self, obj)
@@ -1643,7 +1671,7 @@ class Process(DynamicEntity):
         return obj
 
     def End(self, name='END'):
-        obj = END(name=name)
+        obj = END(name=name, parent=self)
         obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
         Contains(self, obj)
@@ -1654,7 +1682,7 @@ class Process(DynamicEntity):
         return obj
 
     def ExitLoop(self, name='ExitLoop'):
-        obj = ExitLoop(name=name)
+        obj = ExitLoop(name=name, parent=self)
         obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
         Contains(self, obj)
@@ -1666,8 +1694,8 @@ class Process(DynamicEntity):
 
 
 class Process_END(DynamicEntity):
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self, name, parent=None):
+        super().__init__(name, parent=parent)
 
 
 # ========================================================================= #
@@ -1678,12 +1706,12 @@ class Loop(Process):
     Loop Dynamic Entity
     """
 
-    def __init__(self, name='loop', times=2):
-        super().__init__(name)
+    def __init__(self, name='loop', times=2, parent=None):
+        super().__init__(name, parent=parent)
         self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
         # This decomposes a pair dynamic entity called 'end' or name+'_END'
-        self.end = Loop_END(name + '_END', times=times)
+        self.end = Loop_END(name + '_END', times=times, parent=parent)
 
         # Link this and the end using the relation 'Pairs'
         Pairs(self, self.end)
@@ -1697,7 +1725,7 @@ class Loop(Process):
     # !start with an uppercase letter
     #
     def Process(self, name):
-        obj = Process(name)
+        obj = Process(name, parent=self)
         obj.is_root = False
         obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
@@ -1706,8 +1734,8 @@ class Loop(Process):
 
 
 class Loop_END(DynamicEntity):
-    def __init__(self, name, times=2):
-        super().__init__(name)
+    def __init__(self, name, times=2, parent=None):
+        super().__init__(name, parent=parent)
 
         # 'loop_END' is set with the looping times
         self.times = times

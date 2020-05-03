@@ -1,5 +1,7 @@
 <!DOCTYPE html>
 <html>
+<!--Prevent changing unescaped string-->
+{% autoescape None %}
 <head>
     <script src="//code.jquery.com/jquery-3.3.1.min.js"></script>
     <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
@@ -70,7 +72,7 @@
             style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_CENTER;
             style[mxConstants.STYLE_FILLCOLOR] = 'white';
             style[mxConstants.STYLE_FONTCOLOR] = '#000000';
-            style[mxConstants.STYLE_FONTSIZE] = '11';
+            style[mxConstants.STYLE_FONTSIZE] = '13';
             style[mxConstants.STYLE_FONTSTYLE] = 0;
             graph.getStylesheet().putDefaultVertexStyle(style);
 
@@ -78,19 +80,19 @@
             var style = new Object();
             style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_SWIMLANE;
             style[mxConstants.STYLE_SWIMLANE_FILLCOLOR] = '#ffffff';
+            style[mxConstants.STYLE_FILLCOLOR] = '#d7e8f7';
             style[mxConstants.STYLE_STROKECOLOR] = '#1B78C8';
             style[mxConstants.STYLE_STROKEWIDTH] = '2';
             style[mxConstants.STYLE_STARTSIZE] = '30';
+            style[mxConstants.STYLE_FONTSTYLE] = mxConstants.FONT_BOLD;
             graph.getStylesheet().putCellStyle('Process', style);
 
             //스타일 : Process Image
             var style = new Object();
-            style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_LABEL;
+            style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_IMAGE;
             style[mxConstants.STYLE_IMAGE_ALIGN] = mxConstants.ALIGN_CENTER;
-            style[mxConstants.STYLE_IMAGE_VERTICAL_ALIGN] = mxConstants.ALIGN_TOP;
-            style[mxConstants.STYLE_IMAGE_WIDTH] = '40';
-            style[mxConstants.STYLE_IMAGE_HEIGHT] = '40';
-            style[mxConstants.STYLE_STROKECOLOR] = '#1B78C8';
+            style[mxConstants.STYLE_IMAGE_ALIGN] = mxConstants.ALIGN_MIDDLE;
+            style[mxConstants.STYLE_IMAGE_BORDER] = '#1B78C8';
             style[mxConstants.STYLE_STROKEWIDTH] = '2';
             graph.getStylesheet().putCellStyle('ProcessImage', style);
 
@@ -98,21 +100,21 @@
             var style = new Object();
             style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_SWIMLANE;
             style[mxConstants.STYLE_SWIMLANE_FILLCOLOR] = '#ffffff';
+            style[mxConstants.STYLE_FILLCOLOR] = '#d9ebcd';
             style[mxConstants.STYLE_STROKECOLOR] = '#70AD47';
             style[mxConstants.STYLE_STROKEWIDTH] = '2';
             style[mxConstants.STYLE_STARTSIZE] = '30';
             style[mxConstants.STYLE_ROUNDED] = 1;
             style[mxConstants.STYLE_ARCSIZE] = 30;
+            style[mxConstants.STYLE_FONTSTYLE] = mxConstants.FONT_BOLD;
             graph.getStylesheet().putCellStyle('Item', style);
 
             //스타일 : Item Image
             var style = new Object();
-            style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_LABEL;
+            style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_IMAGE;
             style[mxConstants.STYLE_IMAGE_ALIGN] = mxConstants.ALIGN_CENTER;
-            style[mxConstants.STYLE_IMAGE_VERTICAL_ALIGN] = mxConstants.ALIGN_TOP;
-            style[mxConstants.STYLE_IMAGE_WIDTH] = '40';
-            style[mxConstants.STYLE_IMAGE_HEIGHT] = '40';
-            style[mxConstants.STYLE_STROKECOLOR] = '#70AD47';
+            style[mxConstants.STYLE_IMAGE_ALIGN] = mxConstants.ALIGN_MIDDLE;
+            style[mxConstants.STYLE_IMAGE_BORDER] = '#70AD47';
             style[mxConstants.STYLE_STROKEWIDTH] = '2';
             graph.getStylesheet().putCellStyle('ItemImage', style);
 
@@ -144,7 +146,7 @@
             var parent = graph.getDefaultParent();
             graph.getModel().beginUpdate();
             try{
-                {{bd_model|safe}}
+                {{bd_model}}
 
 <!--                var c3 = graph.insertVertex(parent,null,'Induction Furnace', 150,30,100,200,'Process;');-->
 <!--                var c31 = graph.insertVertex(c3,null,'', 0,0,100,50,'ProcessImage;image=images/img3.png;');-->
@@ -154,7 +156,6 @@
 <!--                var c37 = graph.insertVertex(c36,null,'Temp', 0,0,50,30,'property');-->
 <!--                var c38 = graph.insertVertex(c36,null,'2', 50,0,50,30,'property');-->
 
-
 <!--                var c4 = graph.insertVertex(parent,null,'slab', 650,30,100,200,'item;');-->
 <!--                var c41 = graph.insertVertex(c4,null,'', 0,0,100,50,'itemImage;image=images/img4.png;');-->
 <!--                var c46 = graph.insertVertex(c4,null,':', 0,0,100,30,'property');-->
@@ -162,35 +163,45 @@
 <!--                var c48 = graph.insertVertex(c46,null,'2', 50,0,50,30,'property');-->
 
 <!--                var l3 = graph.insertEdge(parent,null,null,c3,c4,'flow');-->
-
-
             }
             finally
             {
                 graph.getModel().endUpdate();
             }
-
-
-
         }
     }
 
+    function update_data(msg_data) {
+        console.log(msg_data)
+        msg_data = msg_data.replace(/'/g, '"');
+        msg_data = JSON.parse(msg_data);
 
-	$(document).ready(function(){
-		//connect to the socket server.
-		var socket = io.connect('http://' + document.domain + ':' + location.port + '/socket');
+        for(var key in msg_data) {
+            var cell = graph.model.getCell(key);
+            var value = msg_data[key].toFixed(2);
 
-		//receive details from server
-		socket.on('sim_updated', function(msg) {
-			console.log("MSG: " + msg.data);
-			//maintain a list of ten numbers
+            graph.model.setValue(cell, value);
+        }
+    }
 
-			v1 = graph.model.getCell('2');
-			graph.model.setValue(v1, msg.data);
-			graph.refresh();
+	//==================================================================================//
+    // This receives events from the web distributor
+    // e.g.,) {'variable1': 0.01, 'variable2': 0.02}
+    //==================================================================================//
+    var updater = {
+        socket: null,
 
-		});
-	});
+        start: function() {
+            var url = "ws://" + location.host + "/guisocket";
+            updater.socket = new WebSocket(url);
+            updater.socket.onmessage = function(event) {
+                <!--console.log(event)-->
+                update_data(event.data);
+            }
+        }
+    };
+
+    updater.start();
 
     </script>
 </head>

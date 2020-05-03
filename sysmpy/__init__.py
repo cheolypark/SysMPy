@@ -15,4 +15,3 @@ from sysmpy.script_generator import *
 from sysmpy.model_generator import *
 from sysmpy.sms_searcher import *
 from sysmpy.gui.gui_main import *
-from sysmpy.gui.mxgraph.flask_socket_server import *

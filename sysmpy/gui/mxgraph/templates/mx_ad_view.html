@@ -1,5 +1,8 @@
 <!DOCTYPE html>
 <html>
+<!--Prevent changing unescaped string-->
+{% autoescape None %}
+
 <head>
     <script src="//code.jquery.com/jquery-3.3.1.min.js"></script>
     <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
@@ -247,7 +250,7 @@
 			graph.getModel().beginUpdate();
 			try{
 	//            var A_process = graph.insertVertex(parent, 'A process', '', 105.0, 42.0, 30, 30, 'Process')
-			   {{ad_model|safe}}
+			   {{ad_model}}
 			}
 			finally
 			{

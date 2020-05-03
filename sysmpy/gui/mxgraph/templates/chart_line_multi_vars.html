@@ -1,4 +1,7 @@
 <html>
+<!--Prevent changing unescaped string-->
+{% autoescape None %}
+
 <head>
     <style>
     .grid-container {
@@ -28,8 +31,9 @@
     google.charts.load('current', {'packages':['line']});
     google.charts.setOnLoadCallback(drawChart);
     <!--    var ids = ["linechart", "linechart2"]-->
-    {{ids|safe}}
-    var data_len = 10;
+
+    {{ids}}
+    var data_len = 30;
     var data = {};
     var chart = {};
     var num_charts = ids.length;
@@ -54,8 +58,10 @@
             // console.log(title, width, height)
 
             data[id] = new google.visualization.DataTable();
-            data[id].addColumn('number', 'Time');
+<!--            data[id].addColumn('number', 'Time');-->
+<!--            data[id].addColumn('number', title);-->
             data[id].addColumn('number', title);
+            data[id].addColumn('number', '');
 
             var data_table = [];
             for (i = 0; i <= data_len; i++) {
@@ -66,8 +72,9 @@
 
             options = {
                 //chart: {title: title},
-                legend: { position: 'bottom',
-                         alignment: 'center'  },
+<!--                legend: { position: 'bottom',-->
+<!--                         alignment: 'center'  },-->
+                legend: {position: 'none'},
                 width: width,
                 height: height,
 
@@ -80,7 +87,7 @@
     }
 
     function update_data(msg_data) {
-        // console.log(msg_data)
+        console.log(msg_data)
         msg_data = msg_data.replace(/'/g, '"');
         msg_data = JSON.parse(msg_data);
         // console.log(msg_data)
@@ -101,20 +108,25 @@
     // This receives events from the web distributor
     // e.g.,) {'variable1': 0.01, 'variable2': 0.02}
     //==================================================================================//
-    $(document).ready(function(){
-		var socket = io.connect('http://' + document.domain + ':' + location.port + '/socket');
+    var updater = {
+        socket: null,
 
-		//receive events from server
-		socket.on('sim_updated', function(msg) {
-			console.log("MSG: " + msg.data);
-			update_data(msg.data);
-		});
-	});
+        start: function() {
+            var url = "ws://" + location.host + "/guisocket";
+            updater.socket = new WebSocket(url);
+            updater.socket.onmessage = function(event) {
+                <!--console.log(event)-->
+                update_data(event.data);
+            }
+        }
+    };
+
+    updater.start();
 
     </script>
 </head>
 <body>
-{{chart_html|safe}}
+{{chart_html}}
 <!--<div class="grid-container">-->
 <!--  <div class="grid-item">-->
 <!--      <div id="linechart" name="size" style="width: 400; height: 300"></div>-->
@@ -123,6 +135,7 @@
 <!--        <div id="linechart2" name="speed" style="width: 400; height: 300"></div>-->
 <!--  </div>-->
 <!--</div>-->
-<button onclick="update_data()">Click me</button>
+
+<!--<button onclick="update_data()">Click me</button>-->
 </body>
 </html>

@@ -1,5 +1,6 @@
 import re
 import sys, inspect
+import numpy as np
 
 
 def is_path_same(path_base, path_target):
@@ -59,6 +60,12 @@ def or_selector_tree(elements, cur_index, cur_element):
     return return_list
 
 
+is_print_out = False
+def print_out(*str):
+    if is_print_out is True:
+        str = '   '.join(str)
+        print(str)
+
 # import entity
 # def print_class_hierachy():
 #     hierachy = {}
@@ -81,3 +88,16 @@ def or_selector_tree(elements, cur_index, cur_element):
 
 # Function: is_path_same
 # print(is_path_same('Projects.AD_Folder\\AD1', 'E:\\SW-SysMPy\\SysMPy\\examples\\Projects\\AD_Folder\\AD1'))
+
+
+class Normal():
+    def __init__(self, mean, sigma):
+        """
+        :param mean: Mean
+        :param sigma: Standard Deviation
+        """
+        self.mean = mean
+        self.sigma = sigma
+
+    def get_random_value(self):
+        return np.random.normal(self.mean, self.sigma, 1)[0]

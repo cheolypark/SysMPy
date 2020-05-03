@@ -29,7 +29,7 @@ def show(p, width=960, height=750, diagram='AD', **kwarg):
     if diagram == 'ad': # Action Diagram
         graph = GuiMXGraphActionDiagram().get_mxgraph(p)
     elif diagram == 'bd': # Block Diagram
-        graph = GuiMXGraphBlockDiagram().get_mxgraph(p, width, height)
+        graph = GuiMXGraphBlockDiagram().get_mxgraph(p, width, height, kwarg)
     elif diagram == 'hd': # Hierarchy Diagram
         graph = GuiMXGraphHierarchyDiagram().get_mxgraph(p, width, height, kwarg)
     elif diagram == 'pc': # Property Chart View
@@ -37,7 +37,7 @@ def show(p, width=960, height=750, diagram='AD', **kwarg):
 
     # print(graph)
 
-    src = f"http://127.0.0.1:9191/{diagram}?g={graph}"
+    src = f"http://127.0.0.1:9191/{diagram}/?g={graph}"
 
     # parsed_html = urllib.parse.quote(src, safe="~@#$&()*!+=:;,.?/\'")
     # print(src)
