@@ -7,10 +7,9 @@ import tornado.options
 import tornado.web
 from tornado.web import StaticFileHandler
 from tornado.web import Application, RequestHandler
-import time
 from sysmpy.gui.mxgraph.script_sample import *
+from tornado.options import define, options
 import socket
-
 import tornado.escape
 import tornado.ioloop
 import tornado.options
@@ -19,8 +18,6 @@ import tornado.websocket
 import os.path
 import uuid
 import ast
-
-from tornado.options import define, options
 
 
 class MainHandler(tornado.web.RequestHandler):
@@ -31,7 +28,7 @@ class MainHandler(tornado.web.RequestHandler):
 class PropertyChartHandler(tornado.web.RequestHandler):
     def get(self):
         """
-            # http://127.0.0.1:9911/?g={'x':0, 'y':0}
+            # http://127.0.0.1:9191/pc/?g={'x':0, 'y':0}
             When the chart_view is initialized, multiple charts are created.
             e.g.,)
             <div class="grid-container">
@@ -66,7 +63,7 @@ class PropertyChartHandler(tornado.web.RequestHandler):
 class SimUpdateHandler(tornado.web.RequestHandler):
     def get(self):
         """
-            # http://127.0.0.1:9911/sim_updated?g={'x':0, 'y':0}
+            # http://127.0.0.1:9191/sim_updated?g={'x':0, 'y':0}
         """
         # print('Simulation data was updated')
 
@@ -200,8 +197,8 @@ def TornadoGuiServer(images_path=None):
 
 def RunServer():
     notebook_path = os.path.abspath('')+'/images'
-    print(notebook_path)
-    TornadoGuiServer(images_path=notebook_path+'/images')
+    # print(notebook_path)
+    TornadoGuiServer(images_path=notebook_path)
 
 # if __name__ == "__main__":
 #     TornadoGuiServer(images_path=None)
