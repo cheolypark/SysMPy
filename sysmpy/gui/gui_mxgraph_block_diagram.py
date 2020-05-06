@@ -1,7 +1,7 @@
 from sysmpy.entity import *
 from sysmpy.relationship import *
 from sysmpy.gui.gui_mxgraph import GuiMXGraph
-
+from sysmpy.gui.gui_config import gui_server_address
 
 class GuiMXGraphBlockDiagram(GuiMXGraph):
     def __init__(self):
@@ -84,7 +84,7 @@ class GuiMXGraphBlockDiagram(GuiMXGraph):
         # We use '/8/' to substitute for ';', because the tornado has a problem with ';', when the GET request is used.
         # var c31 = graph.insertVertex(c3,null,'', 0,0,100,50,'ProcessImage;image=images/img3.png;');
         # node = f"graph.insertVertex({id_parent}, null, '', 0, 0, {node_width}, {node_height}, '{style_image}//image=images/{name}.png') /n "
-        img_url = f'http://127.0.0.1:9191/images/{name}.png'
+        img_url = f'http://{gui_server_address}:9191/images/{name}.png'
         node = f"graph.insertVertex({id_parent}, null, '', 0, 0, {node_width}, {node_height}, '{style_image}/8/image={img_url}') /n "
 
         #

@@ -349,7 +349,7 @@ class Property(StaticEntity):
             self.value = self.range.get_random_value()
             return self.value
 
-    def get_one(self):
+    def get_pop_one(self):
         if isinstance(self.range, list):
             self.value = self.range.pop(0)
             return self.value

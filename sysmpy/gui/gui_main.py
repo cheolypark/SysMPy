@@ -8,19 +8,14 @@ from sysmpy.gui.gui_mxgraph_action_diagram import GuiMXGraphActionDiagram
 from sysmpy.gui.gui_mxgraph_block_diagram import GuiMXGraphBlockDiagram
 from sysmpy.gui.gui_mxgraph_hierarchy_diagram import GuiMXGraphHierarchyDiagram
 from sysmpy.gui.gui_chart_property import GuiChartProperty
+from sysmpy.gui.gui_config import gui_server_address
 
-import urllib
 
 # This removes all warning messages in the Jupyter notebook.
 # Since the flask web server generates warning messages, we use this.
 import logging, sys
 logging.disable()
 
-# from sysmpy.gui.mxgraph.flask2 import start_server
-# start_server()
-
-# from sysmpy.gui.mxgraph.flask_socket_server import start_server
-# start_server()
 
 def show(p, width=960, height=750, diagram='AD', **kwarg):
     diagram = diagram.lower()
@@ -37,7 +32,7 @@ def show(p, width=960, height=750, diagram='AD', **kwarg):
 
     # print(graph)
 
-    src = f"http://127.0.0.1:9191/{diagram}/?g={graph}"
+    src = f"http://{gui_server_address}:9191/{diagram}/?g={graph}"
 
     # parsed_html = urllib.parse.quote(src, safe="~@#$&()*!+=:;,.?/\'")
     # print(src)

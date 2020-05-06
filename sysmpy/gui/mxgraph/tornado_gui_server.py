@@ -18,7 +18,7 @@ import tornado.websocket
 import os.path
 import uuid
 import ast
-
+from sysmpy.gui.gui_config import gui_server_address
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
@@ -82,7 +82,9 @@ class ActionDiagramHandler(RequestHandler):
             my_graph = my_graph.replace("/n", "\n")
             my_graph = my_graph.replace("/", ";")
 
-        self.render("mx_ad_view.html", ad_model=my_graph)
+        mxClient_js = f"<script type='text/javascript' src='http://{gui_server_address}:9191/src/js/mxClient.js'></script>"
+
+        self.render("mx_ad_view.html", ad_model=my_graph, mxClient_js=mxClient_js)
 
 
 class BlockDiagramHandler(RequestHandler):
@@ -98,7 +100,9 @@ class BlockDiagramHandler(RequestHandler):
             my_graph = my_graph.replace("/8/", ";")
             # print(my_graph)
 
-        self.render("mx_bd_view.html",  bd_model=my_graph)
+        mxClient_js = f"<script type='text/javascript' src='http://{gui_server_address}:9191/src/js/mxClient.js'></script>"
+
+        self.render("mx_bd_view.html",  bd_model=my_graph, mxClient_js=mxClient_js)
 
 
 class HierarchyDiagramHandler(RequestHandler):
@@ -111,7 +115,9 @@ class HierarchyDiagramHandler(RequestHandler):
             my_graph = my_graph.replace("/n", "\n")
             my_graph = my_graph.replace("/", ";")
 
-        self.render("mx_hd_view.html", hd_model=my_graph)
+        mxClient_js = f"<script type='text/javascript' src='http://{gui_server_address}:9191/src/js/mxClient.js'></script>"
+
+        self.render("mx_hd_view.html", hd_model=my_graph, mxClient_js=mxClient_js)
 
 
 class GuiSocketHandler(tornado.websocket.WebSocketHandler):
@@ -160,7 +166,6 @@ class Application(tornado.web.Application):
                     (r'/src/js/(.*)', StaticFileHandler, {'path': './src/js'}),
                     (r'/src/css/(.*)', StaticFileHandler, {'path': './src/css'}),
                     (r'/src/images/(.*)', StaticFileHandler, {'path': './src/images'}),
-                    # (r'/src/default_images/(.*)', StaticFileHandler, {'path': './src/default_images'}),
                     (r'/images/(.*)', StaticFileHandler, {'path': images_path}),
                     (r"/pc/", PropertyChartHandler),
                     (r"/ad/", ActionDiagramHandler),
