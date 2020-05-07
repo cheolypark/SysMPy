@@ -7,6 +7,7 @@ import tornado.options
 import tornado.web
 from tornado.web import StaticFileHandler
 from tornado.web import Application, RequestHandler
+from sysmpy import *
 from sysmpy.gui.mxgraph.script_sample import *
 from tornado.options import define, options
 import socket
@@ -18,7 +19,9 @@ import tornado.websocket
 import os.path
 import uuid
 import ast
+
 from sysmpy.gui.gui_config import gui_server_address
+
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
@@ -160,7 +163,7 @@ class Application(tornado.web.Application):
         define("port", default=9191, help="run on the given port", type=int)
 
         if images_path is None:
-            images_path = 'E:/SW-SysMPy/SysMPy/examples/NotebookExample/CyberFactory/images'
+            images_path = '/examples/Jupyter_notebook_examples/CyberFactory/images'
 
         handlers = [(r"/", MainHandler),
                     (r'/src/js/(.*)', StaticFileHandler, {'path': './src/js'}),

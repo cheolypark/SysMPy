@@ -10,6 +10,7 @@ from sysmpy.util import *
 import sysmpy.util as util
 import requests
 import time
+import warnings
 
 # ========================================================================= #
 #                                 Entity                                    #
@@ -32,6 +33,7 @@ class Entity():
         self.is_root = False
         self.is_decomposed = False
         self.module = None
+        self.current_clone = None
 
         # All entities created are stored in the static class Entity
         entity_db.store_entity(self)
@@ -438,9 +440,14 @@ class Requirement(Property):
     def check_property(self):
         if 'traced to' in self.inv_relation:
             rel = [x.start for x in self.inv_relation['traced to']]
-            l = {r.name:r.value for r in rel}
+
+            l = {r.name : r.value for r in rel}
+
             is_passed = 'passed' if rel[0].value in self.range else 'failed'
+
             str = f'{self.name} Range is {self.range}: {l} {is_passed}'
+
+            print(str)
 
     ########################################################################
     # Class Creation Methods
@@ -519,7 +526,7 @@ class DynamicEntity(Entity):
     def reset_sim_status(self):
         self.waiting = False
         self.time = 0
-        self.total_time = 0
+        # self.total_time = 0
         self.is_root = False
 
         for rels in self.relation:
@@ -1415,7 +1422,7 @@ class Process(DynamicEntity):
         """
         This checks interfaces between functions (or actions)
         """
-        from interface_analyzer import InterfaceAnalyzer as IA
+        from sysmpy.interface_analyzer import InterfaceAnalyzer as IA
         ia = IA(self)
         return ia.get_critical_elements(self), \
                ia.get_sphere_of_influence(self), \
@@ -1435,7 +1442,11 @@ class Process(DynamicEntity):
             e.check_property()
 
     def get_action_times(self):
-        actions = entity_db.get_by_type(Action)
+        if self.current_clone is not None:
+            actions, _ = self.current_clone.search(class_search=[Action])
+        else:
+            actions, _ = self.search(class_search=[Action])
+
         dict_action = {x.name:x.total_time for x in actions}
         return dict_action
 
@@ -1446,7 +1457,7 @@ class Process(DynamicEntity):
         if self.properties is not None:
             property_list = [f"'{x.name}':0" for x in self.properties]
             prop_str = '{'+", ".join(property_list) + '}'
-            u = f"http://127.0.0.1:9191/chart_view?properties={prop_str}"
+            u = f"http://127.0.0.1:9191/pc/?g={prop_str}"
             import webbrowser
             webbrowser.open(u)
             time.sleep(1)
@@ -1536,7 +1547,7 @@ class Process(DynamicEntity):
             # sess.mount('http://', adapter)
             sim_url = f"http://127.0.0.1:9191/sim_updated?g={body}"
             r = requests.get(sim_url)
-            print_out("send events to web_distributor", r)
+            # print_out("send events to web_distributor", str(r))
             time.sleep(0.1)
         except requests.exceptions.RequestException as e:
             Process.web_distributor = False
@@ -1551,6 +1562,12 @@ class Process(DynamicEntity):
         If until is None, the simulation performs just one time.
         """
 
+        # Check whether this contains actions. If not, simulation can't work
+        actions, _ = self.search(class_search=[Action])
+        if len(actions) == 0:
+            warnings.warn("At least one action is required.", stacklevel=2)
+            return
+
         util.is_print_out = print_out
 
         # Find other flows and set them into asyncio
@@ -1563,6 +1580,9 @@ class Process(DynamicEntity):
 
             # get flows from the relation 'flow' or 'contains'
             new_proc = self.init_sim_network()
+
+            # set current clone of this entity
+            self.current_clone = new_proc
 
             # print out control flows of UC
             # self.print_flows(self.sim_network)

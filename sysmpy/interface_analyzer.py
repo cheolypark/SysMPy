@@ -90,8 +90,8 @@ class InterfaceAnalyzer:
     def get_unused_items(self, entity):
         # 6. Find the unused items
         unused_items = []
-        list_item = Entity.get_by_type(Item)
-        list_resource = Entity.get_by_type(Resource)
+        list_item = entity_db.get_by_type(Item)
+        list_resource = entity_db.get_by_type(Resource)
         list_item = list_item + list_resource
         for item in list_item:
             senders, receivers = [], []

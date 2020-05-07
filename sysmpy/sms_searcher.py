@@ -133,7 +133,7 @@ class SMSSearcher():
 
         return ret
 
-# s = SMSSearcher('E:/SW-SysMPy/SysMPy/examples/NotebookExample/Steel Industry')
+# s = SMSSearcher('E:/SW-SysMPy/SysMPy/examples/Jupyter_notebook_examples/Steel Industry')
 # print(s.search('are'))
 # s = SMSSearcher('Doc')
 # s.search('ss')

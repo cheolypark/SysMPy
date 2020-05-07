@@ -54,14 +54,19 @@ def get(name_entity, path=None, comparing_method=None):
     :return: a founded object or a list of objects
     """
 
-    if path is None:
-        # Find a module which is using this get function:
-        # - last element ([-1]) is me, the one before ([-2]) is my caller.
-        # - The first element in caller's data is the filename
-        caller_path = traceback.extract_stack()[-2][0]
-        caller, file_extension = os.path.splitext(caller_path)
-    else:
+    caller = None
+
+    if path is not None:
         caller = path
+
+    # if path is None:
+    #     # Find a module which is using this get function:
+    #     # - last element ([-1]) is me, the one before ([-2]) is my caller.
+    #     # - The first element in caller's data is the filename
+    #     caller_path = traceback.extract_stack()[-2][0]
+    #     caller, file_extension = os.path.splitext(caller_path)
+    # else:
+    #     caller = path
 
     l = name_entity.split('.')
 
@@ -115,7 +120,7 @@ def get_op(comparing_method, target, caller=None):
         if caller is None:
             e = [x for x in entity_database if x.name == target]
         elif caller is not None:
-            e = [x for x in entity_database if x.name == target ] # and is_path_same(caller, x.module)]
+            e = [x for x in entity_database if x.name == target and is_path_same(caller, x.module)]
     elif comparing_method == 'ByID':
         e = [x for x in entity_database if f'ID{id(x)}' == target]
 

@@ -8,7 +8,7 @@ def is_path_same(path_base, path_target):
     Return True or False if two paths are relatively same.
 
     :param path_base: e.g., ) Projects2.AD_Folder.AD1'
-    :param path_target: e.g., ) 'E:\\SW-SysMPy\\SysMPy\\examples\\Projects\\AD_Folder\\AD1'
+    :param path_target: e.g., ) 'E:\\SW-SysMPy\\SysMPy\\examples\\script_management\\AD_Folder\\AD1'
     :return:
     """
 
@@ -87,7 +87,7 @@ def print_out(*str):
 # or_selector(elements)
 
 # Function: is_path_same
-# print(is_path_same('Projects.AD_Folder\\AD1', 'E:\\SW-SysMPy\\SysMPy\\examples\\Projects\\AD_Folder\\AD1'))
+# print(is_path_same('script_management.AD_Folder\\AD1', 'E:\\SW-SysMPy\\SysMPy\\examples\\script_management\\AD_Folder\\AD1'))
 
 
 class Normal():
