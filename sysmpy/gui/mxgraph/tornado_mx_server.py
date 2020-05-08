@@ -51,9 +51,9 @@ class DiagramModifyHandler(RequestHandler):
         #rootEntity = entity_db.get("Root Process")
 
         #targetData = entity_db.get( "신규액션1" )
-        targetData = entity_db.get( "Action2" )
+        targetData = edb.get( "Action2" )
 
-        entity_db.remove_entity( targetData )
+        edb.remove_entity( targetData )
 
         gad = GuiMXGraphActionDiagram()
 

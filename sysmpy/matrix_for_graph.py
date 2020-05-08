@@ -98,7 +98,7 @@ class MatrixForGraph():
         :param entity: a process containing actions
         :return: a matrix for the graph
         """
-        self.entity, _ = entity.search(class_search=[Action])
+        self.entity, _ = entity.search(words_search=[Action])
         size = len(self.entity)
         ret_matrix = np.zeros((size, size))
 

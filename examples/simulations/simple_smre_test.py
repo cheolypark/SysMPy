@@ -132,7 +132,7 @@ act_ex.sends(pro1)
 
 # External simulations Script ######################################
 def exsim_function1(io):
-    i1, i2, out = io.get("Com1_1.Size"), io.get("Com1_2.Size"), io.get("Com1.Total size")
+    i1, i2, out = io.get("Com1.Com1_1.Size"), io.get("Com1.Com1_2.Size"), io.get("Com1.Total size")
     i1_value = i1.get_random_value()
     i2_value = i2.get_random_value()
 

@@ -7,7 +7,6 @@ import tornado.options
 import tornado.web
 from tornado.web import StaticFileHandler
 from tornado.web import Application, RequestHandler
-from sysmpy import *
 from sysmpy.gui.mxgraph.script_sample import *
 from tornado.options import define, options
 import socket
@@ -22,12 +21,16 @@ import ast
 
 from sysmpy.gui.gui_config import gui_server_address
 
-
+#=================================================================================================#
+#                                           Main Handler                                          #
+#=================================================================================================#
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
         self.render('gui_index.html')
 
-
+#=================================================================================================#
+#                                     Property Chart Handler                                      #
+#=================================================================================================#
 class PropertyChartHandler(tornado.web.RequestHandler):
     def get(self):
         """
@@ -63,6 +66,42 @@ class PropertyChartHandler(tornado.web.RequestHandler):
         self.render("chart_line_multi_vars.html", ids=ids, chart_html=chart_html)
 
 
+#=================================================================================================#
+#                                     Property Table Handler                                      #
+#=================================================================================================#
+class PropertyTableHandler(tornado.web.RequestHandler):
+    def get(self):
+        """
+            # http://127.0.0.1:9191/pt/?g={'x':0, 'y':'0', 'z':'true'}
+            e.g.,)
+            columns =
+            "data.addColumn('string', 'Name');
+            data.addColumn('number', 'Salary');
+            data.addColumn('boolean', 'Full Time Employee');"
+        """
+        columns = ''
+
+        properties = self.get_arguments("g")[0]
+        properties = ast.literal_eval(properties)
+
+        # print(properties)
+        for k, v in properties.items():
+            if isinstance(v, str):
+                if v == 'true':
+                    type_val = 'boolean'
+                else:
+                    type_val = 'string'
+            else:
+                type_val = 'number'
+
+            columns += f'data.addColumn("{type_val}", "{k}");  '
+
+        self.render('table_multi_vars.html', columns=columns)
+
+
+#=================================================================================================#
+#                                  Simulation Update Handler                                      #
+#=================================================================================================#
 class SimUpdateHandler(tornado.web.RequestHandler):
     def get(self):
         """
@@ -74,7 +113,9 @@ class SimUpdateHandler(tornado.web.RequestHandler):
         GuiSocketHandler.updated_events.append(data)
         GuiSocketHandler.send_to_clients()
 
-
+#=================================================================================================#
+#                                     Action Diagram Handler                                      #
+#=================================================================================================#
 class ActionDiagramHandler(RequestHandler):
     def get(self):
         my_graph = self.get_arguments("g")
@@ -89,7 +130,9 @@ class ActionDiagramHandler(RequestHandler):
 
         self.render("mx_ad_view.html", ad_model=my_graph, mxClient_js=mxClient_js)
 
-
+#=================================================================================================#
+#                                      Block Diagram Handler                                      #
+#=================================================================================================#
 class BlockDiagramHandler(RequestHandler):
     def get(self):
         # print('BlockDiagramHandler')
@@ -107,7 +150,9 @@ class BlockDiagramHandler(RequestHandler):
 
         self.render("mx_bd_view.html",  bd_model=my_graph, mxClient_js=mxClient_js)
 
-
+#=================================================================================================#
+#                                  Hierarchy Diagram Handler                                      #
+#=================================================================================================#
 class HierarchyDiagramHandler(RequestHandler):
     def get(self):
         my_graph = self.get_arguments("g")
@@ -122,7 +167,9 @@ class HierarchyDiagramHandler(RequestHandler):
 
         self.render("mx_hd_view.html", hd_model=my_graph, mxClient_js=mxClient_js)
 
-
+#=================================================================================================#
+#                                      Gui Socket Handler                                         #
+#=================================================================================================#
 class GuiSocketHandler(tornado.websocket.WebSocketHandler):
     waiters = set()
     updated_events = []
@@ -157,7 +204,9 @@ class GuiSocketHandler(tornado.websocket.WebSocketHandler):
         # ChatSocketHandler.update_cache(chat)
         GuiSocketHandler.send_to_clients()
 
-
+#=================================================================================================#
+#                                     Tornado  Application                                        #
+#=================================================================================================#
 class Application(tornado.web.Application):
     def __init__(self, images_path=None):
         define("port", default=9191, help="run on the given port", type=int)
@@ -170,6 +219,7 @@ class Application(tornado.web.Application):
                     (r'/src/css/(.*)', StaticFileHandler, {'path': './src/css'}),
                     (r'/src/images/(.*)', StaticFileHandler, {'path': './src/images'}),
                     (r'/images/(.*)', StaticFileHandler, {'path': images_path}),
+                    (r"/pt/", PropertyTableHandler),
                     (r"/pc/", PropertyChartHandler),
                     (r"/ad/", ActionDiagramHandler),
                     (r"/bd/", BlockDiagramHandler),
@@ -184,7 +234,6 @@ class Application(tornado.web.Application):
             xsrf_cookies=True,
         )
         super(Application, self).__init__(handlers, **settings)
-
 
 def TornadoGuiServer(images_path=None):
     app = Application(images_path)

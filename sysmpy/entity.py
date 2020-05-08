@@ -5,7 +5,7 @@ import queue
 import traceback
 import os
 from copy import deepcopy
-import sysmpy.entity_db as entity_db
+from sysmpy.entity_db import edb
 from sysmpy.util import *
 import sysmpy.util as util
 import requests
@@ -32,11 +32,10 @@ class Entity():
         self.sim_with_decomposition = True
         self.is_root = False
         self.is_decomposed = False
-        self.module = None
         self.current_clone = None
 
         # All entities created are stored in the static class Entity
-        entity_db.store_entity(self)
+        edb.store_entity(self)
         # Entity.store_entity(self)
 
     def __str__(self):
@@ -142,34 +141,45 @@ class Entity():
            e.g.,)
            properties = self.search_entity_by_relation(relation_class=[Sends], entity_class=[Property])
         """
-        _, relation_results = self.search(inverse, class_search=relation_class, depth=depth)
+        _, relation_results = self.search(inverse, words_search=relation_class, depth=depth)
         results = []
         for rel in relation_results:
             if inverse is False:
-                entity_results, _ = rel.end.search(inverse, class_search=entity_class, depth=depth)
+                entity_results, _ = rel.end.search(inverse, words_search=entity_class, depth=depth)
                 results += entity_results
             elif inverse is True:
-                entity_results, _ = rel.start.search(inverse, class_search=entity_class, depth=depth)
+                entity_results, _ = rel.start.search(inverse, words_search=entity_class, depth=depth)
                 results += entity_results
 
         return results
 
-    def search(self, inverse=False, class_search=[], depth=None):
+    def search(self, inverse=False, words_search=[], depth=None):
         """
         This returns an entity list and a relation list for this entity using search words
-        e.g.,) entity_results, relation_results = self.search(class_search=[Requirement])
+        e.g.,) entity_results, relation_results = self.search(words_search=[Requirement])
         :param inverse: 'True' means tracing inverse direction
-        :param class_search: search words
+        :param words_search: search words (e.g., class type (Action), class name ('Action1') )
         :return: The entity and relation list
         """
         breaker = []
         entity_results = []
         relation_results = []
-        self.search_op(breaker, '', inverse, class_search, entity_results, relation_results, depth)
+
+        # 1. Search for a hierarchy name ('Com1.size1')
+        hierarchical_name = [w for w in words_search if isinstance(w, str) and '.' in w]
+        if len(hierarchical_name) > 0:
+            self.search_hierarchical_name(hierarchical_name, entity_results)
+        else: # 2. Search for a simple name ('Action1), a entity type, and a relation type
+            if isinstance(inverse, str) and inverse == 'both':
+                self.search_op(breaker, '', False, words_search, entity_results, relation_results, depth)
+                breaker = []
+                self.search_op(breaker, '', True, words_search, entity_results, relation_results, depth)
+            else:
+                self.search_op(breaker, '', inverse, words_search, entity_results, relation_results, depth)
 
         return entity_results, relation_results
 
-    def search_op(self, breaker, space, inverse, class_search, entity_results, relation_results, depth):
+    def search_op(self, breaker, space, inverse, words_search, entity_results, relation_results, depth):
         # The list breaker contains all previous entities that were already used,
         # so prevent recursive search can be prevented.
         if self in breaker:
@@ -190,8 +200,14 @@ class Entity():
         space += ' '
 
         # Include this entity class if it is in the search list
-        if self.__class__ in class_search:
+        if self.__class__ in words_search and self not in entity_results:
             entity_results.append(self)
+        elif self.name in words_search and self not in entity_results:
+            entity_results.append(self)
+        else:
+            my_id = f'ID{id(self)}'
+            if my_id in words_search and self not in entity_results:
+                entity_results.append(self)
 
         if inverse is False:
             for rel_name, rel_list in self.relation.items():
@@ -199,22 +215,44 @@ class Entity():
 
                 for rel_ins in rel_list:
                     # Include this relation class if it is in the search list
-                    if rel_ins.__class__ in class_search:
+                    if rel_ins.__class__ in words_search:
                         relation_results.append(rel_ins)
 
                     # Perform recursion
-                    rel_ins.end.search_op(breaker, space, inverse, class_search, entity_results, relation_results, depth)
+                    rel_ins.end.search_op(breaker, space, inverse, words_search, entity_results, relation_results, depth)
         elif inverse is True:
             for rel_name, rel_list in self.inv_relation.items():
                 # print_out(space + f'rel: {rel_name}')
 
                 for rel_ins in rel_list:
                     # Include this relation class if it is in the search list
-                    if rel_ins.__class__ in class_search:
+                    if rel_ins.__class__ in words_search:
                         relation_results.append(rel_ins)
 
                     # Perform recursion
-                    rel_ins.start.search_op(breaker, space, inverse, class_search, entity_results, relation_results, depth)
+                    rel_ins.start.search_op(breaker, space, inverse, words_search, entity_results, relation_results, depth)
+
+    def search_hierarchical_name(self, hierarchical_name, entity_results):
+        for name in hierarchical_name:
+            name_list = name.split('.')
+            self.search_hierarchical_name_op(0, name_list, entity_results)
+
+    def search_hierarchical_name_op(self, index, name_list, entity_results):
+        name = name_list[index]
+        index += 1
+
+        if self.name != name:
+            return
+
+        if index == len(name_list):
+            entity_results.append(self)
+            return
+
+        if 'contains' in self.relation:
+            children = [r.end for r in self.relation['contains'] if isinstance(r, Contains)]
+            for i, c in enumerate(children):
+                c.search_hierarchical_name_op(index, name_list, entity_results)
+
 
     def find_root(self):
         """
@@ -274,14 +312,6 @@ class Entity():
         ret = self.find_ancestor_nodes(Loop)
         return ret[0].start.end
 
-    # def find_loop_end(self):
-    #     """
-    #     This returns a first Loop-End node
-    #     """
-    #     ret = []
-    #     self.find_all_nodes(Loop, ret)
-    #     return ret[0].start.end
-
     # ########################################################################
     # # Static Methods
     # # Get or Search Methods
@@ -339,7 +369,6 @@ class Property(StaticEntity):
         :param value: e.g., ) 'T', 10
         """
         super().__init__(name, parent=parent)
-        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         self.range = range
         self.value = value
 
@@ -362,8 +391,9 @@ class Property(StaticEntity):
 # ========================================================================= #
 class Item(StaticEntity):
     def __init__(self, name, parent=None):
+        if parent is None:
+            self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         super().__init__(name, parent=parent)
-        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         self.attr = {}
 
         # Item size is used for conduit operation
@@ -383,8 +413,9 @@ class Conduit(StaticEntity):
     """
 
     def __init__(self, name, parent=None):
+        if parent is None:
+            self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         super().__init__(name, parent=parent)
-        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         self._capacity = 1
         self._delay = 0
 
@@ -419,8 +450,9 @@ class Conduit(StaticEntity):
 # ========================================================================= #
 class Resource(StaticEntity):
     def __init__(self, name, amount=10, minimum=1, maximum=10, units=None, parent=None):
+        if parent is None:
+            self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         super().__init__(name, parent=parent)
-        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         self.amount = amount
         self.minimum = minimum
         self.maximum = maximum
@@ -432,8 +464,9 @@ class Resource(StaticEntity):
 # ========================================================================= #
 class Requirement(Property):
     def __init__(self, name, range=None, value=None, parent=None, **kwargs):
+        if parent is None:
+            self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         super().__init__(name, range, value, parent=parent)
-        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         self.kwargs = kwargs
         self.is_root = True
 
@@ -480,8 +513,9 @@ class Requirement(Property):
 # ========================================================================= #
 class Component(StaticEntity):
     def __init__(self, name, parent=None, **kwargs):
+        if parent is None:
+            self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         super().__init__(name, parent=parent)
-        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
         self.kwargs = kwargs
         self.is_root = True
 
@@ -629,6 +663,7 @@ class DynamicEntity(Entity):
 
         # Make a new entity corresponding to this entity
         # After using the new entity, it will be removed.
+
         new_en = deepcopy(self)
 
         new_en.make_network_op(new_en.sim_network)
@@ -1046,7 +1081,7 @@ class DynamicEntity(Entity):
                         # If there are no function and the properties of the items associated with the function,
                         # then the values of the properties are randomly sampled.
                         if self.function is not None:
-                            selected = self.function(entity_db)
+                            selected = self.function(edb)
                         else:
                             properties = self.search_entity_by_relation(relation_class=[Sends], entity_class=[Property])
                             for p in properties:
@@ -1067,10 +1102,10 @@ class DynamicEntity(Entity):
                     elif isinstance(self, Condition):
                         if self.function is not None:
                             # Perform a function script for selection
-                            selected = self.function(entity_db)
+                            selected = self.function(edb)
                             # Because 'selected' is the original process in db and r.end is a copied process,
-                            # entity_db.is_same() is used to check their same identity.
-                            selected_flows = [r for r in flows if entity_db.is_same(r.end, selected)]
+                            # edb.is_same() is used to check their same identity.
+                            selected_flows = [r for r in flows if edb.is_same(r.end, selected)]
                             Process.store_event(self, 'selects ' + ', '.join([r.end.name for r in selected_flows]))
                             for r in selected_flows:
                                 r.sent = True
@@ -1111,10 +1146,10 @@ class DynamicEntity(Entity):
                     proc = self.get_pairs()
 
                     if proc.function is not None:
-                        selected = proc.function(entity_db)
+                        selected = proc.function(edb)
                     else:
                         # Search properties of this process
-                        list_properties, _ = proc.search(class_search=[Property], depth=1)
+                        list_properties, _ = proc.search(words_search=[Property], depth=1)
 
                         for p in list_properties:
                             # This property performs the sampling by itself
@@ -1169,7 +1204,6 @@ class Action(DynamicEntity):
     """
     def __init__(self, name, duration=1, parent=None):
         super().__init__(name, duration, parent=parent)
-        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
     ########################################################################
     # Class Creation Methods
@@ -1206,7 +1240,6 @@ class And(DynamicEntity):
     """
     def __init__(self, name='and', parent=None):
         super().__init__(name, parent=parent)
-        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
         # This decomposes a pair dynamic entity called 'end' or name+'_END'
         self.end = And_END(name + '_END', parent=parent)
@@ -1241,7 +1274,6 @@ class Or(DynamicEntity):
     """
     def __init__(self, name='or', parent=None):
         super().__init__(name, parent=parent)
-        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
         # This decomposes a pair dynamic entity called 'end' or name+'_END'
         self.end = Or_END(name + '_END', parent=parent)
@@ -1277,7 +1309,6 @@ class XOr(DynamicEntity):
 
     def __init__(self, name='xor', parent=None):
         super().__init__(name, parent=parent)
-        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
         # This decomposes a pair dynamic entity called 'end' or name+'_END'
         self.end = XOr_END(name + '_END', parent=parent)
@@ -1313,7 +1344,6 @@ class Condition(DynamicEntity):
 
     def __init__(self, name, parent=None):
         super().__init__(name, parent=parent)
-        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
         # This decomposes a pair dynamic entity called 'end' or name+'_END'
         self.end = Condition_END(name + '_END', parent=parent)
@@ -1352,7 +1382,6 @@ class END(DynamicEntity):
 
     def __init__(self, name, parent=None):
         super().__init__(name, parent=parent)
-        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
     def reset_waiting(self):
         super().reset_waiting()
@@ -1391,12 +1420,13 @@ class Process(DynamicEntity):
     web_distributor = False
 
     def __init__(self, name, parent=None):
-        super().__init__(name, parent=parent)
         # Find a module which is using this class
         # and set the caller's path to this class, so we can know where this object came form:
         # - last element ([-1]) is me, the one before ([-2]) is my caller.
         # - The first element in caller's data is the filename
-        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+        if parent is None:
+            self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+        super().__init__(name, parent=parent)
 
         # Loop can inherit process. And a pure process uses the following codes.
         if isinstance(self, Loop) is False:
@@ -1436,16 +1466,16 @@ class Process(DynamicEntity):
         This checks all requirements and evaluates them using simulation results
         """
 
-        entity_results, relation_results = self.search(class_search=[Requirement])
+        entity_results, relation_results = self.search(words_search=[Requirement])
         for e in entity_results:
             # print_out(e)
             e.check_property()
 
     def get_action_times(self):
         if self.current_clone is not None:
-            actions, _ = self.current_clone.search(class_search=[Action])
+            actions, _ = self.current_clone.search(words_search=[Action])
         else:
-            actions, _ = self.search(class_search=[Action])
+            actions, _ = self.search(words_search=[Action])
 
         dict_action = {x.name:x.total_time for x in actions}
         return dict_action
@@ -1548,7 +1578,7 @@ class Process(DynamicEntity):
             sim_url = f"http://127.0.0.1:9191/sim_updated?g={body}"
             r = requests.get(sim_url)
             # print_out("send events to web_distributor", str(r))
-            time.sleep(0.1)
+            time.sleep(0.5)
         except requests.exceptions.RequestException as e:
             Process.web_distributor = False
             raise SystemExit(e)
@@ -1563,7 +1593,7 @@ class Process(DynamicEntity):
         """
 
         # Check whether this contains actions. If not, simulation can't work
-        actions, _ = self.search(class_search=[Action])
+        actions, _ = self.search(words_search=[Action])
         if len(actions) == 0:
             warnings.warn("At least one action is required.", stacklevel=2)
             return
@@ -1592,7 +1622,7 @@ class Process(DynamicEntity):
             new_proc.check_web_distributor()
 
             # get list of properties which are updated by the simulation
-            new_proc.properties, _ = new_proc.search(class_search=[Property])
+            new_proc.properties, _ = new_proc.search(words_search=[Property])
 
             # open a web browser for the property view
             if property_view is True:
@@ -1728,7 +1758,6 @@ class Loop(Process):
 
     def __init__(self, name='loop', times=2, parent=None):
         super().__init__(name, parent=parent)
-        self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
         # This decomposes a pair dynamic entity called 'end' or name+'_END'
         self.end = Loop_END(name + '_END', times=times, parent=parent)

@@ -16,7 +16,7 @@ class InterfaceAnalyzer:
 
     def get_sphere_of_influence(self, entity):
         # 2. Find the sphere of influence of critical elements
-        entity_results, relation_results = entity.search(class_search=[Action])
+        entity_results, relation_results = entity.search(words_search=[Action])
 
         sphere_of_influence = {}
 
@@ -50,7 +50,7 @@ class InterfaceAnalyzer:
     def get_recursive_elements(self, entity):
         # 4. Find the recursive elements
         recursive_elements = []
-        entity_results, relation_results = entity.search(class_search=[Action])
+        entity_results, relation_results = entity.search(words_search=[Action])
 
         for e in entity_results:
             sending_items, receiving_items = [], []
@@ -71,7 +71,7 @@ class InterfaceAnalyzer:
     def get_absence_items(self, entity):
         # 5. Find the absence of items
         absence_items = []
-        entity_results, relation_results = entity.search(class_search=[Action])
+        entity_results, relation_results = entity.search(words_search=[Action])
 
         for e in entity_results:
             sending_items, receiving_items = [], []
@@ -90,8 +90,8 @@ class InterfaceAnalyzer:
     def get_unused_items(self, entity):
         # 6. Find the unused items
         unused_items = []
-        list_item = entity_db.get_by_type(Item)
-        list_resource = entity_db.get_by_type(Resource)
+        list_item = edb.get([Item])
+        list_resource = edb.get([Resource])
         list_item = list_item + list_resource
         for item in list_item:
             senders, receivers = [], []

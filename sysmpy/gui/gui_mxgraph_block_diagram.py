@@ -163,7 +163,7 @@ class GuiMXGraphBlockDiagram(GuiMXGraph):
 
     def get_mxgraph_string(self, proc_en, view_width=600, hide_no_action_process=False):
         # 1. Find Process
-        list_processes, _ = proc_en.search(class_search=[Process])
+        list_processes, _ = proc_en.search(words_search=[Process])
 
         # Remove the root process according to a request.
         # list_processes.remove(proc_en)
@@ -182,7 +182,7 @@ class GuiMXGraphBlockDiagram(GuiMXGraph):
         for proc in list_processes:
 
             # Search actions of this process
-            list_actions, _ = proc.search(class_search=[Action], depth=1)
+            list_actions, _ = proc.search(words_search=[Action], depth=1)
 
             # If the view state is hide_no_action_process, then skip this process
             if hide_no_action_process is True:
@@ -208,7 +208,7 @@ class GuiMXGraphBlockDiagram(GuiMXGraph):
                 total_height += h
 
             # Search properties of this process
-            list_properties, _ = proc.search(class_search=[Property], depth=1)
+            list_properties, _ = proc.search(words_search=[Property], depth=1)
 
             # For each property, make an MXGraph script
             for property in list_properties:
@@ -250,7 +250,7 @@ class GuiMXGraphBlockDiagram(GuiMXGraph):
                 str += self.make_image(item)
 
                 # Search properties of this item
-                list_properties, _ = item.search(class_search=[Property], depth=1)
+                list_properties, _ = item.search(words_search=[Property], depth=1)
 
                 # For each property, make an MXGraph script
                 for property in list_properties:

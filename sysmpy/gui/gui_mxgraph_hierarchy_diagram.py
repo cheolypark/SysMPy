@@ -229,7 +229,7 @@ class GuiMXGraphHierarchyDiagram(GuiMXGraph):
         entity.numbering('A')
         type = kwarg['type']
 
-        entity_results, relation_results = entity.search(class_search=[type])
+        entity_results, relation_results = entity.search(words_search=[type])
 
         str = ''
         root_name = 'root'

@@ -27,7 +27,7 @@ class ModelGenerator():
         for k, v in model_info.items():
             v = str(v)
             if k == 'WHO':
-                p = entity_db.get(v)
+                p = edb.get(v)
                 if p is None:
                     p = Process(v)
             elif k == 'VERB':

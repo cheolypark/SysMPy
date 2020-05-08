@@ -327,7 +327,7 @@ class GuiMXGraphActionDiagram(GuiMXGraph):
         # get flows from the relation 'flow' or 'contains'
         new_en = proc_en.make_network()
 
-        test, _ = new_en.search(class_search=[Property])
+        test, _ = new_en.search(words_search=[Property])
 
         new_en.numbering('A')
 
@@ -341,7 +341,7 @@ class GuiMXGraphActionDiagram(GuiMXGraph):
         # 2. Find center_x and center_y for dynamic entity (e.g., Process, Action, and Condition)
         list_actions = [] # This is used for item positioning
 
-        list_items, _ = new_en.search(class_search=[Item])
+        list_items, _ = new_en.search(words_search=[Item])
 
         self.find_center(new_en, None, 0, 0, list_actions)
 

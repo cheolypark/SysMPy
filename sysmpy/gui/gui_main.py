@@ -7,7 +7,8 @@ from IPython.display import HTML
 from sysmpy.gui.gui_mxgraph_action_diagram import GuiMXGraphActionDiagram
 from sysmpy.gui.gui_mxgraph_block_diagram import GuiMXGraphBlockDiagram
 from sysmpy.gui.gui_mxgraph_hierarchy_diagram import GuiMXGraphHierarchyDiagram
-from sysmpy.gui.gui_chart_property import GuiChartProperty
+from sysmpy.gui.gui_property_line_chart import GuiPropertyLineChart
+from sysmpy.gui.gui_property_table import GuiPropertyTable
 from sysmpy.gui.gui_config import gui_server_address
 
 
@@ -27,8 +28,10 @@ def show(p, width=960, height=750, diagram='AD', **kwarg):
         graph = GuiMXGraphBlockDiagram().get_mxgraph(p, width, height, kwarg)
     elif diagram == 'hd': # Hierarchy Diagram
         graph = GuiMXGraphHierarchyDiagram().get_mxgraph(p, width, height, kwarg)
-    elif diagram == 'pc': # Property Chart View
-        graph = GuiChartProperty().get_chart_info(p, width, height)
+    elif diagram == 'pc': # Property Line Chart View
+        graph = GuiPropertyLineChart().get_chart_info(p, width, height)
+    elif diagram == 'pt':  # Property Table View
+        graph = GuiPropertyTable().get_chart_info(p, width, height)
 
     # print(graph)
 
