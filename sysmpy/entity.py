@@ -4,13 +4,13 @@ import random
 import queue
 import traceback
 import os
-from copy import deepcopy
 from sysmpy.entity_db import edb
 from sysmpy.util import *
 import sysmpy.util as util
 import requests
 import time
 import warnings
+
 
 # ========================================================================= #
 #                                 Entity                                    #
@@ -19,7 +19,6 @@ class Entity():
     """ LIFECYCLE MODELING LANGUAGE (LML) SPECIFICATION 1.1:
     An entity is something can exist by itself and is uniquely identifiable.
     """
-
     _debug_mode = False
 
     def __init__(self, name, number=None, description=None, parent=None):
@@ -27,16 +26,20 @@ class Entity():
         self.number = number
         self.description = description
         self.parent = parent
-        self.relation = {}      # Relation
-        self.inv_relation = {}  # Inverse Relation
+        self.relation = {}
+        self.inv_relation = {}
         self.sim_with_decomposition = True
         self.is_root = False
         self.is_decomposed = False
-        self.current_clone = None
+        self.cloned_db = None
+
+        if parent is not None:
+            self.hierarchical_name = parent.hierarchical_name + '.' + name
+        else:
+            self.hierarchical_name = name
 
         # All entities created are stored in the static class Entity
         edb.store_entity(self)
-        # Entity.store_entity(self)
 
     def __str__(self):
         return f"{self.name} is associated with {self.relation}"
@@ -61,11 +64,6 @@ class Entity():
     def get_numbered_name(self):
         return f'{self.number} {self.name}'
 
-    def get_name_with_parent(self):
-        if self.parent is not None:
-            return f'{self.parent.name}.{self.name}'
-        return f'{self.name}'
-
     def get_name(self, length=None):
         if length is not None:
             str = self.name[:length]+'.'
@@ -84,13 +82,20 @@ class Entity():
         """
         self.sim_with_decomposition = dec
 
+    def set_module(self, path):
+        # Check Ipython
+        if 'ipython-input' in path:
+            path = '[ipython]'
+
+        self.module = path
+
     ########################################################################
     # Class Creation Methods
     # !start with an uppercase letter
     #
     def Property(self, name, range=None, value=None):
         obj = Property(name, range, value, parent=self)
-        obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+        self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
 
         Contains(self, obj)
         return obj
@@ -158,7 +163,18 @@ class Entity():
         This returns an entity list and a relation list for this entity using search words
         e.g.,) entity_results, relation_results = self.search(words_search=[Requirement])
         :param inverse: 'True' means tracing inverse direction
-        :param words_search: search words (e.g., class type (Action), class name ('Action1') )
+        :param words_search: a list of searching words
+            The ways getting entity objects
+            (1) By class types
+                search([Action, Item])
+            (2) By relation types
+                search([sends, receives])
+            (3) By entity names
+                search(['action1')
+            (4) By entity hierarchical names
+                search(['process1.and1.action1')
+            (5) By id
+                search(['ID902342'])
         :return: The entity and relation list
         """
         breaker = []
@@ -392,7 +408,7 @@ class Property(StaticEntity):
 class Item(StaticEntity):
     def __init__(self, name, parent=None):
         if parent is None:
-            self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+            self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
         super().__init__(name, parent=parent)
         self.attr = {}
 
@@ -414,7 +430,7 @@ class Conduit(StaticEntity):
 
     def __init__(self, name, parent=None):
         if parent is None:
-            self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+            self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
         super().__init__(name, parent=parent)
         self._capacity = 1
         self._delay = 0
@@ -451,7 +467,7 @@ class Conduit(StaticEntity):
 class Resource(StaticEntity):
     def __init__(self, name, amount=10, minimum=1, maximum=10, units=None, parent=None):
         if parent is None:
-            self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+            self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
         super().__init__(name, parent=parent)
         self.amount = amount
         self.minimum = minimum
@@ -465,7 +481,7 @@ class Resource(StaticEntity):
 class Requirement(Property):
     def __init__(self, name, range=None, value=None, parent=None, **kwargs):
         if parent is None:
-            self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+            self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
         super().__init__(name, range, value, parent=parent)
         self.kwargs = kwargs
         self.is_root = True
@@ -482,6 +498,10 @@ class Requirement(Property):
 
             print(str)
 
+            return is_passed
+
+        return None
+
     ########################################################################
     # Class Creation Methods
     # !start with an uppercase letter
@@ -489,7 +509,7 @@ class Requirement(Property):
     def Requirement(self, name, range=None, value=None, **kwargs):
         obj = Requirement(name, range, value, parent=self, **kwargs)
         obj.is_root = False
-        obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+        self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
 
         Contains(self, obj)
         return obj
@@ -514,7 +534,7 @@ class Requirement(Property):
 class Component(StaticEntity):
     def __init__(self, name, parent=None, **kwargs):
         if parent is None:
-            self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+            self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
         super().__init__(name, parent=parent)
         self.kwargs = kwargs
         self.is_root = True
@@ -533,7 +553,7 @@ class Component(StaticEntity):
     def Component(self, name, **kwargs):
         obj = Component(name, parent=self, **kwargs)
         obj.is_root = False
-        obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+        self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
 
         Contains(self, obj)
         return obj
@@ -661,12 +681,24 @@ class DynamicEntity(Entity):
         :return:
         """
 
-        # Make a new entity corresponding to this entity
-        # After using the new entity, it will be removed.
+        # Make a new entity db corresponding to the original entity db
+        # After using the new entity db, this will be removed.
+        cloned_db = edb.get_cloned_db(path=self.module)
 
-        new_en = deepcopy(self)
+        # The new cloned db is stored in the original entity,
+        # so after simulation, all result data can be accessed.
+        self.cloned_db = cloned_db
 
+        # Get a new process from the cloned db
+        new_en = cloned_db.get(self.name, path=self.module)
+
+        # Make a simulation network using the new process
         new_en.make_network_op(new_en.sim_network)
+
+        # Set the cloned db to all entities
+        new_en.cloned_db = cloned_db
+        for e in new_en.sim_network:
+            e.cloned_db = cloned_db
 
         return new_en
 
@@ -1081,7 +1113,7 @@ class DynamicEntity(Entity):
                         # If there are no function and the properties of the items associated with the function,
                         # then the values of the properties are randomly sampled.
                         if self.function is not None:
-                            selected = self.function(edb)
+                            selected = self.function(self.cloned_db)
                         else:
                             properties = self.search_entity_by_relation(relation_class=[Sends], entity_class=[Property])
                             for p in properties:
@@ -1102,10 +1134,10 @@ class DynamicEntity(Entity):
                     elif isinstance(self, Condition):
                         if self.function is not None:
                             # Perform a function script for selection
-                            selected = self.function(edb)
+                            selected = self.function(self.cloned_db)
                             # Because 'selected' is the original process in db and r.end is a copied process,
-                            # edb.is_same() is used to check their same identity.
-                            selected_flows = [r for r in flows if edb.is_same(r.end, selected)]
+                            # self.cloned_db.is_same() is used to check their same identity.
+                            selected_flows = [r for r in flows if self.cloned_db.is_same(r.end, selected)]
                             Process.store_event(self, 'selects ' + ', '.join([r.end.name for r in selected_flows]))
                             for r in selected_flows:
                                 r.sent = True
@@ -1146,7 +1178,7 @@ class DynamicEntity(Entity):
                     proc = self.get_pairs()
 
                     if proc.function is not None:
-                        selected = proc.function(edb)
+                        selected = proc.function(self.cloned_db)
                     else:
                         # Search properties of this process
                         list_properties, _ = proc.search(words_search=[Property], depth=1)
@@ -1212,7 +1244,7 @@ class Action(DynamicEntity):
     def Process(self, name):
         obj = Process(name, parent=self)
         obj.is_root = False
-        obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+        self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
 
         Contains(self, obj)
 
@@ -1254,7 +1286,7 @@ class And(DynamicEntity):
     def Process(self, name):
         obj = Process(name, parent=self)
         obj.is_root = False
-        obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+        self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
 
         Contains(self, obj)
         return obj
@@ -1288,7 +1320,7 @@ class Or(DynamicEntity):
     def Process(self, name):
         obj = Process(name, parent=self)
         obj.is_root = False
-        obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+        self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
 
         Contains(self, obj)
         return obj
@@ -1323,7 +1355,7 @@ class XOr(DynamicEntity):
     def Process(self, name):
         obj = Process(name, parent=self)
         obj.is_root = False
-        obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+        self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
 
         Contains(self, obj)
         return obj
@@ -1358,7 +1390,7 @@ class Condition(DynamicEntity):
     def Process(self, name):
         obj = Process(name, parent=self)
         obj.is_root = False
-        obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+        self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
 
         Contains(self, obj)
         return obj
@@ -1425,7 +1457,7 @@ class Process(DynamicEntity):
         # - last element ([-1]) is me, the one before ([-2]) is my caller.
         # - The first element in caller's data is the filename
         if parent is None:
-            self.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+            self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
         super().__init__(name, parent=parent)
 
         # Loop can inherit process. And a pure process uses the following codes.
@@ -1467,16 +1499,24 @@ class Process(DynamicEntity):
         """
 
         entity_results, relation_results = self.search(words_search=[Requirement])
+
+        evaluation_results = {}
         for e in entity_results:
             # print_out(e)
-            e.check_property()
+            is_passed = e.check_property()
+
+            evaluation_results[e.name] = is_passed
+
+        return evaluation_results
 
     def get_action_times(self):
-        if self.current_clone is not None:
-            actions, _ = self.current_clone.search(words_search=[Action])
-        else:
-            actions, _ = self.search(words_search=[Action])
+        # if self.current_clone is not None:
+        #     actions, _ = self.current_clone.search(words_search=[Action])
+        # else:
+        #     actions, _ = self.search(words_search=[Action])
+        path = os.path.splitext(traceback.extract_stack()[-2][0])[0]
 
+        actions = self.cloned_db.get(Action, path=path)
         dict_action = {x.name:x.total_time for x in actions}
         return dict_action
 
@@ -1490,7 +1530,7 @@ class Process(DynamicEntity):
             u = f"http://127.0.0.1:9191/pc/?g={prop_str}"
             import webbrowser
             webbrowser.open(u)
-            time.sleep(1)
+            time.sleep(0.5)
 
     ########################################################################
     # staticmethod
@@ -1529,12 +1569,21 @@ class Process(DynamicEntity):
 
                     if Process.web_distributor is True:
                         root_process = act.get_pairs()
+                        # If this root_process contains any properties in the child entities
+                        # Send the values of the properties
                         if root_process.properties is not None and len(root_process.properties) > 0:
                             data = {}
 
+                            # Make data containing property values
                             for p in root_process.properties:
-                                data[p.get_name_with_parent()] = p.value
+                                data[p.hierarchical_name] = p.value
 
+                            # Check the property values with the requirement ranges
+                            evaluation_results = root_process.evaluate_requirements()
+
+                            data.update(evaluation_results)
+
+                            # Send the data to all clients
                             Process.send_event_to_web_distributor(data)
             else:
                 if Entity._debug_mode:
@@ -1583,7 +1632,7 @@ class Process(DynamicEntity):
             Process.web_distributor = False
             raise SystemExit(e)
 
-    async def sim(self, until=5, property_view=False, print_out=False):
+    async def sim(self, until=5, property_view=False, print_out=False, use_web_distributor=False):
         """
         This triggers the simulation.
 
@@ -1611,15 +1660,13 @@ class Process(DynamicEntity):
             # get flows from the relation 'flow' or 'contains'
             new_proc = self.init_sim_network()
 
-            # set current clone of this entity
-            self.current_clone = new_proc
-
             # print out control flows of UC
             # self.print_flows(self.sim_network)
 
             # check whether a web distributor exist or not
             # The web distributor is a web server sending simulation events to the connected clients
-            new_proc.check_web_distributor()
+            if use_web_distributor is True:
+                new_proc.check_web_distributor()
 
             # get list of properties which are updated by the simulation
             new_proc.properties, _ = new_proc.search(words_search=[Property])
@@ -1652,14 +1699,14 @@ class Process(DynamicEntity):
         :return:
         """
         obj = Action(name, duration, parent=self)
-        obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+        self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
 
         Contains(self, obj)
         return obj
 
     def And(self, *args):
         obj = And(parent=self)
-        obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+        self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
 
         Contains(self, obj)
 
@@ -1673,7 +1720,7 @@ class Process(DynamicEntity):
 
     def Or(self, *args):
         obj = Or(parent=self)
-        obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+        self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
 
         Contains(self, obj)
 
@@ -1687,7 +1734,7 @@ class Process(DynamicEntity):
 
     def XOr(self, *args):
         obj = XOr(parent=self)
-        obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+        self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
 
         Contains(self, obj)
 
@@ -1701,14 +1748,14 @@ class Process(DynamicEntity):
 
     def Loop(self, name, times=2):
         obj = Loop(name=name, times=times, parent=self)
-        obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+        self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
 
         Contains(self, obj)
         return obj
 
     def Condition(self, name, *args):
         obj = Condition(name=name, parent=self)
-        obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+        self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
 
         Contains(self, obj)
 
@@ -1722,7 +1769,7 @@ class Process(DynamicEntity):
 
     def End(self, name='END'):
         obj = END(name=name, parent=self)
-        obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+        self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
 
         Contains(self, obj)
         root_process = obj.find_root()
@@ -1733,7 +1780,7 @@ class Process(DynamicEntity):
 
     def ExitLoop(self, name='ExitLoop'):
         obj = ExitLoop(name=name, parent=self)
-        obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+        self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
 
         Contains(self, obj)
         loop_end = obj.find_loop_end()
@@ -1776,7 +1823,7 @@ class Loop(Process):
     def Process(self, name):
         obj = Process(name, parent=self)
         obj.is_root = False
-        obj.module, _ = os.path.splitext(traceback.extract_stack()[-2][0])
+        self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
 
         Contains(self, obj)
         return obj

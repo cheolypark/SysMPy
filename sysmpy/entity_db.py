@@ -34,14 +34,16 @@ class EntityDB():
         if path is None:
             path, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
-            # Check Ipython
-            if 'ipython-input' in path:
-                is_Ipython = True
+        # Check Ipython
+        if 'ipython-input' in path:
+            is_Ipython = True
+            # print('is_Ipython')
 
         e = []
         for file, entities in self.entity_database.items():
             if file == path or is_Ipython is True:
                 for entity in entities:
+                    # print(entity)
                     e1, _ = entity.search(words_search=[name])
                     e += e1
 
@@ -137,12 +139,16 @@ class EntityDB():
             return True
         return False
 
-    def get_clone_db(self, path=None):
+    def get_cloned_db(self, path=None):
         if path in self.entity_database:
-            en = self.entity_database[path]
-            clone_db = deepcopy(en)
+            entities = self.entity_database[path]
+            cloned_entities = deepcopy(entities)
+            cloned_db = EntityDB()
+            cloned_db.entity_database[path] = cloned_entities
+        else:
+            cloned_db = deepcopy(edb)
 
-        return clone_db
+        return cloned_db
 
 
 edb = EntityDB()

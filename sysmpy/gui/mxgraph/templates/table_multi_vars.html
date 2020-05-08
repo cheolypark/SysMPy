@@ -4,19 +4,79 @@
 
 <head>
     <style>
-    .grid-container {
-      display: grid;
-      grid-template-columns: auto auto auto;
-      background-color: rgba(255, 255, 255, 0.8); //#2196F3;
-      padding: 0px;
-    }
-    .grid-item {
-      background-color: rgba(255, 255, 255, 0.8);
-      border: 0px solid rgba(0, 0, 0, 0.8);
-      padding: 1px;
-      font-size: 12px;
-      text-align: center;
-    }
+        .grid-container {
+          display: grid;
+          grid-template-columns: auto auto auto;
+          background-color: rgba(255, 255, 255, 0.8); //#2196F3;
+          padding: 0px;
+        }
+        .grid-item {
+          background-color: rgba(255, 255, 255, 0.8);
+          border: 0px solid rgba(0, 0, 0, 0.8);
+          padding: 1px;
+          font-size: 12px;
+          text-align: center;
+        }
+        .bold-green-font {
+            font-weight: bold;
+            color: green;
+        }
+
+        .bold-font {
+            font-weight: bold;
+        }
+
+        .right-text {
+            text-align: right;
+        }
+
+        .center-text {
+            text-align: center;
+        }
+
+        .large-font {
+            font-size: 15px;
+        }
+
+        .italic-darkblue-font {
+            font-style: italic;
+            color: darkblue;
+        }
+
+        .italic-purple-font {
+            font-style: italic;
+            color: purple;
+        }
+
+        .underline-blue-font {
+            text-decoration: underline;
+            color: blue;
+        }
+
+        .index-gray-font {
+            color: gray;
+        }
+
+        .gold-border {
+            border: 3px solid gold;
+        }
+
+        .deeppink-border {
+            border: 3px solid deeppink;
+        }
+
+        .orange-background {
+            background-color: orange;
+        }
+
+        .orchid-background {
+            background-color: orchid;
+        }
+
+        .beige-background {
+            background-color: beige;
+        }
+
 
     </style>
     <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
@@ -35,6 +95,7 @@
 
     var data;
     var table;
+    var options;
 
     function drawTable() {
         data = new google.visualization.DataTable();
@@ -53,8 +114,20 @@
 <!--          ['Bob',   7000,  true]-->
 <!--        ]);-->
 
+        var cssClassNames = {
+            'headerRow': 'large-font bold-font center-text',
+            'tableRow': 'center-text',
+            'oddTableRow': 'beige-background',
+            'selectedTableRow': 'orange-background large-font',
+            'hoverTableRow': '',
+            'headerCell': 'gold-border',
+            'tableCell': 'center-text',
+            'rowNumberCell': 'index-gray-font center-text'};
+
+        options = {'showRowNumber': true, width: '100%', height: '100%', 'allowHtml': true, 'cssClassNames': cssClassNames};
+
         table = new google.visualization.Table(document.getElementById('table_div'));
-        table.draw(data, {showRowNumber: true, width: '100%', height: '100%'});
+        table.draw(data, options);
     }
 
     function update_data(msg_data) {
@@ -71,7 +144,7 @@
 
         data.addRows( [arr] );
 
-        table.draw(data, {showRowNumber: true, width: '100%', height: '100%'});
+        table.draw(data, options);
     }
 
     //==================================================================================//

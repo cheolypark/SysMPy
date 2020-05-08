@@ -19,7 +19,7 @@ import os.path
 import uuid
 import ast
 
-from sysmpy.gui.gui_config import gui_server_address
+from sysmpy.config import gui_server_address
 
 #=================================================================================================#
 #                                           Main Handler                                          #

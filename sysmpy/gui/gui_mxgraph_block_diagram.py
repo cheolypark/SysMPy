@@ -1,7 +1,7 @@
 from sysmpy.entity import *
 from sysmpy.relationship import *
 from sysmpy.gui.gui_mxgraph import GuiMXGraph
-from sysmpy.gui.gui_config import gui_server_address
+from sysmpy.config import gui_server_address
 
 class GuiMXGraphBlockDiagram(GuiMXGraph):
     def __init__(self):
@@ -39,7 +39,7 @@ class GuiMXGraphBlockDiagram(GuiMXGraph):
         node_height = en.node_height
         label = en.name
         id = en.get_id()
-        name = en.get_name_with_parent()
+        name = en.hierarchical_name
 
         if isinstance(en, Process):
             pass
@@ -106,7 +106,7 @@ class GuiMXGraphBlockDiagram(GuiMXGraph):
         node_height = 20
         label = en.get_name(5)
         id_parent = parent.get_id()
-        name = en.get_name_with_parent()
+        name = en.hierarchical_name
         id = en.get_id()
         id_p = id + '_p'
         id_k = id + '_k'

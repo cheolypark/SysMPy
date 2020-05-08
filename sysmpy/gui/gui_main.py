@@ -1,20 +1,16 @@
-from sysmpy.entity import *
-import asyncio
-
-from IPython.core.display import HTML
-from IPython.display import IFrame
 from IPython.display import HTML
 from sysmpy.gui.gui_mxgraph_action_diagram import GuiMXGraphActionDiagram
 from sysmpy.gui.gui_mxgraph_block_diagram import GuiMXGraphBlockDiagram
 from sysmpy.gui.gui_mxgraph_hierarchy_diagram import GuiMXGraphHierarchyDiagram
 from sysmpy.gui.gui_property_line_chart import GuiPropertyLineChart
 from sysmpy.gui.gui_property_table import GuiPropertyTable
-from sysmpy.gui.gui_config import gui_server_address
+from sysmpy.config import gui_server_address
 
 
 # This removes all warning messages in the Jupyter notebook.
 # Since the flask web server generates warning messages, we use this.
-import logging, sys
+import logging
+
 logging.disable()
 
 

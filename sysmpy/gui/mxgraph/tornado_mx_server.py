@@ -17,11 +17,13 @@ from script_sample import *
 
 from sysmpy import *
 
+from sysmpy.gui.mxgraph.script_sample import root_process
+
 
 # /ad_sample/ Handler
 class ActionDiagramSampleHandler(RequestHandler):
     def get(self):
-        p = getActionScript() # call sample Acton diagram Unified Script
+        p = root_process # call sample Acton diagram Unified Script
         gad = GuiMXGraphActionDiagram()
         my_graph = gad.get_mxgraph( p )
         my_graph = my_graph.replace("/n", "\n")
@@ -46,18 +48,27 @@ class DiagramModifyHandler(RequestHandler):
         else :
             print("undefine event(evt)")
 
+        print(root_process)
 
-        #rootEntity = entity_db.get_by_type( Process )[0]
-        #rootEntity = entity_db.get("Root Process")
+        # 저장된 root_process 를 이용하고 Action Type을 이용하여 object 추출
+        entity_results, _ = root_process.search(words_search=[Action])
+        print(entity_results)
 
-        #targetData = entity_db.get( "신규액션1" )
-        targetData = edb.get( "Action2" )
+        # 저장된 root_process 를 이용하고 entity name을 이용하여 object 추출
+        entity_results, _ = root_process.search(words_search=["Root Process"])
+        print(entity_results)
 
-        edb.remove_entity( targetData )
+        # 저장된 root_process 를 이용하고 entity name을 이용하여 object 추출
+        entity_results, _ = root_process.search(words_search=["신규액션1"])
+        print(entity_results)
 
-        gad = GuiMXGraphActionDiagram()
+        # edb (entity_db)를 이용하여 object 추출 (Path 명기 필수)
+        targetData = edb.get("Action2", path=root_process.module)
+        print(targetData)
 
-        #my_graph = gad.get_mxgraph( rootEntity )
+        edb.remove_entity(targetData)
+
+        my_graph = GuiMXGraphActionDiagram().get_mxgraph( root_process )
         my_graph = my_graph.replace("/n", "\n")
         self.write(ad_script.mxGraph_start_nice_label + ad_script.mxGraph_styles + my_graph + ad_script.mxGraph_end)
         #self.write( my_graph )

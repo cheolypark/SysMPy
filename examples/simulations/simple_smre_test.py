@@ -146,9 +146,11 @@ def exsim_function1(io):
 # Script end ##################################
 act_ex.func(exsim_function1)
 
+GuiPropertyTable().get_chart_info(p_ex)
+
 ###############################################
 # 2 run simulation
-asyncio.run(p_ex.sim())
+asyncio.run(p_ex.sim(use_web_distributor=True))
 
 """
 6. Check requirements with the simulation results

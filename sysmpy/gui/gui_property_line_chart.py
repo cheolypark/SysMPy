@@ -1,6 +1,5 @@
 from sysmpy.entity import *
-from sysmpy.relationship import *
-from sysmpy.gui.gui_mxgraph import GuiMXGraph
+from copy import deepcopy
 
 
 class GuiPropertyLineChart():
@@ -19,7 +18,7 @@ class GuiPropertyLineChart():
         new_en.properties, _ = new_en.search(words_search=[Property])
 
         if new_en.properties is not None:
-            property_list = [f"'{x.get_name_with_parent()}':0" for x in new_en.properties]
+            property_list = [f"'{x.hierarchical_name}':0" for x in new_en.properties]
             prop_str = '{' + ", ".join(property_list) + '}'
             return prop_str
 
