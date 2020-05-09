@@ -8,6 +8,7 @@ act1_1 = p_1.Action("Action1")
 act2_1 = p_1.Action("Action2")
 act3_1 = p_1.Action("Action3")
 
+print(p_1)
 edb.get_cloned_db(path='E:\SW-SysMPy\SysMPy\examples\script_management\AD_Folder\AD1')
 
 # Get the 'Action1' entity

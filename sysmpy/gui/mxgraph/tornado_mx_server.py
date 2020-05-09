@@ -13,7 +13,6 @@ from tornado.options import define, options
 import ad_script
 import bd_script
 import hd_script
-from script_sample import *
 
 from sysmpy import *
 
@@ -23,9 +22,9 @@ from sysmpy.gui.mxgraph.script_sample import root_process
 # /ad_sample/ Handler
 class ActionDiagramSampleHandler(RequestHandler):
     def get(self):
+        print(edb)
         p = root_process # call sample Acton diagram Unified Script
-        gad = GuiMXGraphActionDiagram()
-        my_graph = gad.get_mxgraph( p )
+        my_graph = GuiMXGraphActionDiagram().get_mxgraph(p)
         my_graph = my_graph.replace("/n", "\n")
         self.write(ad_script.mxGraph_start_nice_label + ad_script.mxGraph_styles + my_graph + ad_script.mxGraph_end)
         self.render('simple_mx_web.html')
@@ -66,9 +65,9 @@ class DiagramModifyHandler(RequestHandler):
         targetData = edb.get("Action2", path=root_process.module)
         print(targetData)
 
-        edb.remove_entity(targetData)
+        edb.remove_entity(targetData, path=root_process.module)
 
-        my_graph = GuiMXGraphActionDiagram().get_mxgraph( root_process )
+        my_graph = GuiMXGraphActionDiagram().get_mxgraph(root_process)
         my_graph = my_graph.replace("/n", "\n")
         self.write(ad_script.mxGraph_start_nice_label + ad_script.mxGraph_styles + my_graph + ad_script.mxGraph_end)
         #self.write( my_graph )

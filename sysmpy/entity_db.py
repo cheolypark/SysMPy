@@ -111,6 +111,10 @@ class EntityDB():
                 for r in remove_list:
                     rel_oposites.remove(r)
 
+                # Remove the relation, if it becomes empty
+                if len(rel_oposites) == 0:
+                    rel.start.relation.pop(rel.re_name)
+
         # Disconnect this from which entities related to this on the relation
         for name, relations in en.relation.items():
             for rel in relations:
@@ -123,12 +127,24 @@ class EntityDB():
                 for r in remove_list:
                     rel_oposites.remove(r)
 
+                # Remove the relation, if it becomes empty
+                if len(rel_oposites) == 0:
+                    rel.end.relation.pop(rel.inv_name)
+
+        #################################################################
+        # Remove the root entity, if en is the root entity
         if path is None:
             path, _ = os.path.splitext(traceback.extract_stack()[-2][0])
 
-        entities = self.entity_database[path]
-        if en in entities:
-            entities.remove(en)
+        # Check Ipython
+        if 'ipython-input' in path:
+            path = '[ipython]'
+
+        if path in self.entity_database:
+            entities = self.entity_database[path]
+            if en in entities:
+                entities.remove(en)
+        #################################################################
 
     def is_same(self, e1, e2):
         """

@@ -36,7 +36,6 @@ class Relationship:
         s = '[{}] {} [{}]'.format(self.start.name, self.re_name, self.end.name)
         return s
 
-
 class Flow(Relationship):
     """
     'Flow' is used to send control flows between dynamic entities for simulation.

@@ -42,7 +42,12 @@ class Entity():
         edb.store_entity(self)
 
     def __str__(self):
-        return f"{self.name} is associated with {self.relation}"
+        relations = []
+        for k, rels in self.relation.items():
+            relations += rels
+
+        relations = [r.__str__() for r in relations]
+        return f"{self.name} -> {', '.join(relations)}"
 
     def __repr__(self):
         return self.name
