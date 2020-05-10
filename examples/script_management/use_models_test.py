@@ -3,10 +3,18 @@ from examples.script_management.AD_Folder.AD1 import *
 from examples.script_management.BD_Folder.BD1 import *
 
 # 1 Define actions
-p_1 = Process("process")
+p_1 = Process("process 1")
 act1_1 = p_1.Action("Action1")
 act2_1 = p_1.Action("Action2")
 act3_1 = p_1.Action("Action3")
+
+p_1 = Process("process 2")
+act1_1 = p_1.Action("Action1")
+act2_1 = p_1.Action("Action2")
+act3_1 = p_1.Action("Action3")
+
+GuiMXGraphActionDiagram().get_mxgraph(p_1)
+
 
 print(p_1)
 edb.get_cloned_db(path='E:\SW-SysMPy\SysMPy\examples\script_management\AD_Folder\AD1')
@@ -14,6 +22,7 @@ edb.get_cloned_db(path='E:\SW-SysMPy\SysMPy\examples\script_management\AD_Folder
 # Get the 'Action1' entity
 a1 = edb.get('Action1')
 print(a1)
+
 
 # Get the 'Action1' entity from 'examples.script_management.AD_Folder.AD1'
 a1_from_AD1 = edb.get('Action1', path='E:\SW-SysMPy\SysMPy\examples\script_management\AD_Folder\AD1')

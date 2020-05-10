@@ -101,7 +101,7 @@ class Entity():
     #
     def Property(self, name, range=None, value=None):
         obj = Property(name, range, value, parent=self)
-        self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
+        # self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
 
         Contains(self, obj)
         return obj
@@ -541,7 +541,7 @@ class Requirement(Property):
     def Requirement(self, name, range=None, value=None, **kwargs):
         obj = Requirement(name, range, value, parent=self, **kwargs)
         obj.is_root = False
-        self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
+        # self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
 
         Contains(self, obj)
         return obj
@@ -585,7 +585,7 @@ class Component(StaticEntity):
     def Component(self, name, **kwargs):
         obj = Component(name, parent=self, **kwargs)
         obj.is_root = False
-        self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
+        # self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
 
         Contains(self, obj)
         return obj
@@ -1276,7 +1276,7 @@ class Action(DynamicEntity):
     def Process(self, name):
         obj = Process(name, parent=self)
         obj.is_root = False
-        self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
+        # self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
 
         Contains(self, obj)
 
@@ -1318,7 +1318,7 @@ class And(DynamicEntity):
     def Process(self, name):
         obj = Process(name, parent=self)
         obj.is_root = False
-        self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
+        # self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
 
         Contains(self, obj)
         return obj
@@ -1352,7 +1352,7 @@ class Or(DynamicEntity):
     def Process(self, name):
         obj = Process(name, parent=self)
         obj.is_root = False
-        self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
+        # self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
 
         Contains(self, obj)
         return obj
@@ -1387,7 +1387,7 @@ class XOr(DynamicEntity):
     def Process(self, name):
         obj = Process(name, parent=self)
         obj.is_root = False
-        self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
+        # self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
 
         Contains(self, obj)
         return obj
@@ -1422,7 +1422,7 @@ class Condition(DynamicEntity):
     def Process(self, name):
         obj = Process(name, parent=self)
         obj.is_root = False
-        self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
+        # self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
 
         Contains(self, obj)
         return obj
@@ -1731,14 +1731,14 @@ class Process(DynamicEntity):
         :return:
         """
         obj = Action(name, duration, parent=self)
-        self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
+        # self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
 
         Contains(self, obj)
         return obj
 
     def And(self, *args):
         obj = And(parent=self)
-        self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
+        # self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
 
         Contains(self, obj)
 
@@ -1752,7 +1752,7 @@ class Process(DynamicEntity):
 
     def Or(self, *args):
         obj = Or(parent=self)
-        self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
+        # self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
 
         Contains(self, obj)
 
@@ -1766,7 +1766,7 @@ class Process(DynamicEntity):
 
     def XOr(self, *args):
         obj = XOr(parent=self)
-        self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
+        # self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
 
         Contains(self, obj)
 
@@ -1780,14 +1780,14 @@ class Process(DynamicEntity):
 
     def Loop(self, name, times=2):
         obj = Loop(name=name, times=times, parent=self)
-        self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
+        # self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
 
         Contains(self, obj)
         return obj
 
     def Condition(self, name, *args):
         obj = Condition(name=name, parent=self)
-        self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
+        # self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
 
         Contains(self, obj)
 
@@ -1801,7 +1801,7 @@ class Process(DynamicEntity):
 
     def End(self, name='END'):
         obj = END(name=name, parent=self)
-        self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
+        # self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
 
         Contains(self, obj)
         root_process = obj.find_root()
@@ -1812,7 +1812,7 @@ class Process(DynamicEntity):
 
     def ExitLoop(self, name='ExitLoop'):
         obj = ExitLoop(name=name, parent=self)
-        self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
+        # self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
 
         Contains(self, obj)
         loop_end = obj.find_loop_end()
@@ -1855,7 +1855,7 @@ class Loop(Process):
     def Process(self, name):
         obj = Process(name, parent=self)
         obj.is_root = False
-        self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
+        # self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
 
         Contains(self, obj)
         return obj

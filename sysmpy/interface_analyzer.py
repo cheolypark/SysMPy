@@ -90,8 +90,12 @@ class InterfaceAnalyzer:
     def get_unused_items(self, entity):
         # 6. Find the unused items
         unused_items = []
-        list_item = edb.get([Item])
-        list_resource = edb.get([Resource])
+        list_item = edb.get(Item, path=entity.module)
+        list_resource = edb.get(Resource, path=entity.module)
+        if list_item is None:
+            list_item = []
+        if list_resource is None:
+            list_resource = []
         list_item = list_item + list_resource
         for item in list_item:
             senders, receivers = [], []

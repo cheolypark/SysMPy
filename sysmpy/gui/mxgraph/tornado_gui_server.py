@@ -7,7 +7,6 @@ import tornado.options
 import tornado.web
 from tornado.web import StaticFileHandler
 from tornado.web import Application, RequestHandler
-from sysmpy.gui.mxgraph.script_sample import *
 from tornado.options import define, options
 import socket
 import tornado.escape

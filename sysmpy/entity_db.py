@@ -2,7 +2,7 @@ import traceback
 import os
 from sysmpy.util import *
 from copy import deepcopy
-
+import warnings
 
 class EntityDB():
     def __init__(self):
@@ -14,7 +14,12 @@ class EntityDB():
             if en.module not in self.entity_database:
                 self.entity_database[en.module] = []
 
-            self.entity_database[en.module].append(en)
+            # check a same entity name
+            same_name = [x for x in self.entity_database[en.module] if x.name == en.name]
+            if len(same_name) > 0:
+                warnings.warn(f"There is a same name {en.name} of an entity in {self.entity_database}. Please change the name of the new entity. ")
+            else:
+                self.entity_database[en.module].append(en)
 
     def get(self, name, path=None):
         """
