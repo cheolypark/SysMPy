@@ -32,6 +32,7 @@ class Entity():
         self.is_root = False
         self.is_decomposed = False
         self.cloned_db = None
+        self.graphic_info = None
 
         if parent is not None:
             self.hierarchical_name = parent.hierarchical_name + '.' + name
@@ -333,15 +334,30 @@ class Entity():
         ret = self.find_ancestor_nodes(Loop)
         return ret[0].start.end
 
-    # ########################################################################
-    # # Static Methods
-    # # Get or Search Methods
-    # # The following methods is for a global entity
-    # #
+    #########################################################################
+    # Static Methods
+    # Get or Search Methods
+    # The following methods is for a global entity
+    #
     @staticmethod
     def debug_mode(b):
         Entity._debug_mode = b
 
+    #########################################################################
+    # Graphic Methods
+    def set_graphic_info(self, **kargs):
+        self.graphic_info = kargs
+
+    def get_graphic_info(self):
+        """
+        :return: "strokeColor=gray;"
+        """
+        if self.graphic_info is not None:
+            info_list = [f'{k}={v};' for k, v in self.graphic_info.items()]
+            info_str = ''.join(info_list)
+            return info_str
+
+        return ''
 
 # ========================================================================= #
 #                             Static Entity                                 #
@@ -392,14 +408,25 @@ class Property(StaticEntity):
         super().__init__(name, parent=parent)
         self.range = range
         self.value = value
+        self.updated = False
+
+    def set_value(self, value):
+        self.updated = True
+        self.value = value
 
     def get_random_value(self):
-        if isinstance(self.range, list):
-            self.value = random.choice(self.range)
+        # "updated" means this value was updated by a certain function
+        # In this case, the random number generation is not used.
+        if self.updated is True:
+            self.updated = False
             return self.value
-        else:
-            self.value = self.range.get_random_value()
-            return self.value
+        elif self.updated is False:
+            if isinstance(self.range, list):
+                self.value = random.choice(self.range)
+                return self.value
+            else:
+                self.value = self.range.get_random_value()
+                return self.value
 
     def get_pop_one(self):
         if isinstance(self.range, list):

@@ -132,6 +132,16 @@
             style[mxConstants.STYLE_ALIGN] = 'ALIGN_LEFT ';
             graph.getStylesheet().putCellStyle('Property', style);
 
+            //스타일 : PropertyValue
+            var style = new Object();
+            style[mxConstants.STYLE_SHAPE] = mxPerimeter.RectanglePerimeter;
+            style[mxConstants.STYLE_FILLCOLOR] = '#d7e8f7';
+            style[mxConstants.STYLE_STROKECOLOR] = '#1B78C8';
+            style[mxConstants.STYLE_STROKEWIDTH] = '2';
+            style[mxConstants.STYLE_STARTSIZE] = '30';
+            style[mxConstants.STYLE_FONTSTYLE] = mxConstants.FONT_BOLD;
+            graph.getStylesheet().putCellStyle('PropertyValue', style);
+
             //스타일 : Flow
             var style = new Object();
             style[mxConstants.STYLE_EDGE] = mxEdgeStyle.TopToBottom;
@@ -180,7 +190,9 @@
             var cell = graph.model.getCell(key);
             var value = msg_data[key].toFixed(2);
 
+<!--            graph.model.setStyle(cell, 'Process');-->
             graph.model.setValue(cell, value);
+
         }
     }
 

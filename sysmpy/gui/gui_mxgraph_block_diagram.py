@@ -2,6 +2,7 @@ from sysmpy.entity import *
 from sysmpy.relationship import *
 from sysmpy.gui.gui_mxgraph import GuiMXGraph
 from sysmpy.config import gui_server_address
+from copy import deepcopy
 
 class GuiMXGraphBlockDiagram(GuiMXGraph):
     def __init__(self):
@@ -61,17 +62,21 @@ class GuiMXGraphBlockDiagram(GuiMXGraph):
         node = ''
         if id not in self.mx_nodes:
             self.mx_nodes.append(id)
+
+            graphic_info = en.get_graphic_info()
+
             # var c3 = graph.insertVertex(parent, null,'Process 1', 150,30,100,200,'Process;');
             # var c31 = graph.insertVertex(c3,null,'', 0,0,100,50,'ProcessImage;image=images/img3.png;');
             # var c33 = graph.insertVertex(c3,null,'Action 1', 0,0,50,20,'ActionBoundary');
             # var c36 = graph.insertVertex(c3,null,':', 0,0,100,30,'Property');
             # var c37 = graph.insertVertex(c36,null,'Temp', 0,0,50,30,'Property');
             # var c38 = graph.insertVertex(c36,null,'2', 50,0,50,30,'Property');
-            node = f"var {id} = graph.insertVertex(parent, '{name}', '{label}', {x}, {y}, {node_width}, {node_height}, '{type(en).__name__}') /n "
+            node = f"var {id} = graph.insertVertex(parent, '{name}', '{label}', {x}, {y}, {node_width}, {node_height}, '{type(en).__name__};{graphic_info}') /n "
+            node = node.replace(";", "/8/")
+            # print(node)
+        return node, node_height, graphic_info
 
-        return node, node_height
-
-    def make_image(self, parent):
+    def make_image(self, parent, graphic_info):
         node_width = parent.node_width
         node_height = parent.node_height - 30
         id_parent = parent.get_id()
@@ -85,9 +90,11 @@ class GuiMXGraphBlockDiagram(GuiMXGraph):
         # var c31 = graph.insertVertex(c3,null,'', 0,0,100,50,'ProcessImage;image=images/img3.png;');
         # node = f"graph.insertVertex({id_parent}, null, '', 0, 0, {node_width}, {node_height}, '{style_image}//image=images/{name}.png') /n "
         img_url = f'http://{gui_server_address}:9191/images/{name}.png'
-        node = f"graph.insertVertex({id_parent}, null, '', 0, 0, {node_width}, {node_height}, '{style_image}/8/image={img_url}') /n "
+        # graphic_info = 'imageBorder=red;'
+        node = f"graph.insertVertex({id_parent}, null, '', 0, 0, {node_width}, {node_height}, '{style_image};image={img_url};{graphic_info}') /n "
+        node = node.replace(";", "/8/")
+        # print(node)
 
-        #
         return node
 
     def make_action(self, parent, en):
@@ -95,9 +102,11 @@ class GuiMXGraphBlockDiagram(GuiMXGraph):
         label = en.name
         node_width = parent.node_width
         node_height = 20
+        graphic_info = en.get_graphic_info()
 
-        # var c33 = graph.insertVertex(c3,null,'Action 1', 0,0,50,20,'actionBoundary');
-        node = f"graph.insertVertex({id}, null, '{label}', 0, 0, {node_width}, {node_height}, 'ActionBoundary') /n "
+        # var c33 = graph.insertVertex(c3,null,'Action 1', 0,0,50,20,'actionBoundary;strokeColor=gray;');
+        node = f"graph.insertVertex({id}, null, '{label}', 0, 0, {node_width}, {node_height}, 'ActionBoundary;{graphic_info}') /n "
+        node = node.replace(";", "/8/")
 
         return node, node_height
 
@@ -118,7 +127,7 @@ class GuiMXGraphBlockDiagram(GuiMXGraph):
         node = ''
         node += f"var {id_p} = graph.insertVertex({id_parent}, null, '', 0, 0, {node_width}, {node_height}, 'Property') /n "
         node += f"var {id_k} = graph.insertVertex({id_p}, null, '{label}', 0, 0, {node_width/2}, {node_height}, 'Property') /n "
-        node += f"var {id_v} = graph.insertVertex({id_p}, '{name}', 'null', {node_width/2}, 0, {node_width/2}, {node_height}, 'Property') /n "
+        node += f"var {id_v} = graph.insertVertex({id_p}, '{name}', 'null', {node_width/2}, 0, {node_width/2}, {node_height}, 'PropertyValue') /n "
 
         return node, node_height
 
@@ -193,12 +202,12 @@ class GuiMXGraphBlockDiagram(GuiMXGraph):
             self.init_graphic_variables(proc)
 
             # Make an MXGraph script for this process
-            s, h = self.make_node(proc, x, y)
+            s, h, graphic_info = self.make_node(proc, x, y)
             str += s
             total_height += h
 
             # Make an MXGraph script for the image of this process
-            str += self.make_image(proc)
+            str += self.make_image(proc, graphic_info)
 
             # For each action, make an MXGraph script
             for action in list_actions:
@@ -242,12 +251,12 @@ class GuiMXGraphBlockDiagram(GuiMXGraph):
                     max_height = 0
 
                 # Make an MXGraph script for this item
-                s, h = self.make_node(item, x, y)
+                s, h, graphic_info = self.make_node(item, x, y)
                 str += s
                 total_height += h
 
                 # Make an MXGraph script for the image of this item
-                str += self.make_image(item)
+                str += self.make_image(item, graphic_info)
 
                 # Search properties of this item
                 list_properties, _ = item.search(words_search=[Property], depth=1)

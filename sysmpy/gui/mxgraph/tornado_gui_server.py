@@ -124,7 +124,7 @@ class ActionDiagramHandler(RequestHandler):
         else:
             my_graph = str(my_graph[0])
             my_graph = my_graph.replace("/n", "\n")
-            my_graph = my_graph.replace("/", ";")
+            my_graph = my_graph.replace("/8/", ";")
 
         mxClient_js = f"<script type='text/javascript' src='http://{gui_server_address}:9191/src/js/mxClient.js'></script>"
 
@@ -161,7 +161,7 @@ class HierarchyDiagramHandler(RequestHandler):
         else:
             my_graph = str(my_graph[0])
             my_graph = my_graph.replace("/n", "\n")
-            my_graph = my_graph.replace("/", ";")
+            my_graph = my_graph.replace("/8/", ";")
 
         mxClient_js = f"<script type='text/javascript' src='http://{gui_server_address}:9191/src/js/mxClient.js'></script>"
 
@@ -188,7 +188,7 @@ class GuiSocketHandler(tornado.websocket.WebSocketHandler):
         while len(cls.updated_events) > 0:
             evt = cls.updated_events.pop(0)
             for waiter in cls.waiters:
-                time.sleep(0.5)
+                time.sleep(0.1)
                 try:
                     waiter.write_message(evt)
                 except:
@@ -253,8 +253,9 @@ def TornadoGuiServer(images_path=None):
 
 
 def RunServer():
-    notebook_path = os.path.abspath('')+'/images'
-    # print(notebook_path)
+    notebook_path = os.path.abspath('')+'\images'
+    print(notebook_path)
+
     TornadoGuiServer(images_path=notebook_path)
 
 # if __name__ == "__main__":
