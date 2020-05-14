@@ -17,6 +17,7 @@ import tornado.websocket
 import os.path
 import uuid
 import ast
+import time
 
 from sysmpy.config import gui_server_address
 
@@ -259,3 +260,5 @@ def RunServer():
 
 # if __name__ == "__main__":
 #     TornadoGuiServer(images_path=None)
+
+# RunServer()
