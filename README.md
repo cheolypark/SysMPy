@@ -77,7 +77,15 @@ asyncio.run(p.sim())
 ### Prerequisites for Matlab 
 The following package would be needed to run some examples for Matlab. 
 - Python for matlab:
+
 https://www.mathworks.com/help/matlab/matlab_external/install-the-matlab-engine-for-python.html
+
+### Prerequisites for Natural Language Processing (NLP) 
+- Spacy package:
+
+pip install -U spacy
+
+python -m spacy download en_core_web_sm
 
 ### Members
 Developers:

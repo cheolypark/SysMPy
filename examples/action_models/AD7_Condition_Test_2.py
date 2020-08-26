@@ -42,7 +42,7 @@ p = Process("process0")
 p_con = p.Condition("Condition 1")
 
 i1 = Item("Item1")
-i1.attr["A"] = 60
+i1.Property('attr', [1, 2, 3], 1)
 
 p_con.receives(i1)
 
@@ -54,14 +54,14 @@ p_act2 = p2.Action("Action 2")
 # Condition Script ######################################
 def function1(io):
     # inputs
-    i1 = io.get('Item1')
+    i1 = io.get('Item1.attr')
     # outputs
     o1, o2 = io.get('process 1'), io.get('process 2')
 
-    i1.attr['A'] += 10
-    print("Current value: " + str(i1.attr["A"]))
+    i1.value += 10
+    print("Current value: " + str(i1.value))
 
-    if i1.attr['A'] > 70:
+    if i1.value > 70:
         return o1
     else:
         return o2

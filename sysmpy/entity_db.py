@@ -46,11 +46,11 @@ class EntityDB():
 
         e = []
         for file, entities in self.entity_database.items():
-            if file == path or is_Ipython is True:
-                for entity in entities:
-                    # print(entity)
-                    e1, _ = entity.search(words_search=[name])
-                    e += e1
+            # if file == path or is_Ipython is True:
+            for entity in entities:
+                # print(entity)
+                e1, _ = entity.search(words_search=[name])
+                e += e1
 
         # make unique elements
         e = list(set(e))

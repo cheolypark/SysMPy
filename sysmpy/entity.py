@@ -33,6 +33,7 @@ class Entity():
         self.is_decomposed = False
         self.cloned_db = None
         self.graphic_info = None
+        self.module = None
 
         if parent is not None:
             self.hierarchical_name = parent.hierarchical_name + '.' + name
@@ -442,7 +443,6 @@ class Item(StaticEntity):
         if parent is None:
             self.set_module(os.path.splitext(traceback.extract_stack()[-2][0])[0])
         super().__init__(name, parent=parent)
-        self.attr = {}
 
         # Item size is used for conduit operation
         self._size = 0
@@ -715,24 +715,25 @@ class DynamicEntity(Entity):
 
         # Make a new entity db corresponding to the original entity db
         # After using the new entity db, this will be removed.
-        cloned_db = edb.get_cloned_db(path=self.module)
+        # cloned_db = edb.get_cloned_db(path=self.module)
 
         # The new cloned db is stored in the original entity,
         # so after simulation, all result data can be accessed.
-        self.cloned_db = cloned_db
+        # self.cloned_db = cloned_db
 
         # Get a new process from the cloned db
-        new_en = cloned_db.get(self.name, path=self.module)
+        # new_en = cloned_db.get(self.name, path=self.module)
 
         # Make a simulation network using the new process
-        new_en.make_network_op(new_en.sim_network)
+        # new_en.make_network_op(new_en.sim_network)
+        self.make_network_op(self.sim_network)
 
         # Set the cloned db to all entities
-        new_en.cloned_db = cloned_db
-        for e in new_en.sim_network:
-            e.cloned_db = cloned_db
+        # new_en.cloned_db = cloned_db
+        # for e in new_en.sim_network:
+        #     e.cloned_db = cloned_db
 
-        return new_en
+        return self
 
     def init_sim_network(self):
         """
@@ -825,7 +826,7 @@ class DynamicEntity(Entity):
                             # If e does not have the node 'end' (e.g., 'Action')
                             # This means it doesn't have any pair
                             e.flow(self.end)
-                            entities.append(self.end)
+                            # entities.append(self.end)
                         elif isinstance(e, END) or isinstance(e, ExitLoop) :
                             # If e is the class 'END', this means e will terminate with the root process end
                             # When END is created, it is already associated with the root process end, so skip
@@ -835,7 +836,9 @@ class DynamicEntity(Entity):
                             # This means there is the 'End' pair for this
                             # This 'End' pair is used for flowing to the current 'End' pair
                             e.end.flow(self.end)
-                            entities.append(self.end)
+                            # entities.append(self.end)
+
+                    entities.append(self.end)
 
         elif isinstance(self, Process):   # This is likely to be an empty process (no 'contains' key)
             # Just let this root process to flow directly to the end
@@ -875,9 +878,8 @@ class DynamicEntity(Entity):
             #
             ##################################################################################
 
-            # if self.name == 'A':
-            #     print(self.name)
-            #     print('!')
+            if self.name == 'p1_END':
+                print('I am this!')
 
             ########################################################################
             # Check 1: Check waiting state
@@ -907,7 +909,8 @@ class DynamicEntity(Entity):
 
             if flowed_from is None:
                 # No flowed_from means there are no input events for this node
-                b_flow_fire = True
+                # There are two cases: (1) There is End() or ExitLoop() before this
+                return
             else:
                 # Having flowed_from means there are input events for this node
                 flows_true = [r for r in flowed_from if r.sent is True]
@@ -920,6 +923,9 @@ class DynamicEntity(Entity):
                 # If this self is 'or_END' and decomposes one true inputting event
                 # Then this node now can fire its output event
                 if isinstance(self, Or_END) and len(flows_true) >= 1:
+                    b_flow_fire = True
+
+                if isinstance(self, XOr_END) and len(flows_true) >= 1:
                     b_flow_fire = True
 
                 # If this self is 'Condition_END' and decomposes one true inputting event
@@ -1145,7 +1151,8 @@ class DynamicEntity(Entity):
                         # If there are no function and the properties of the items associated with the function,
                         # then the values of the properties are randomly sampled.
                         if self.function is not None:
-                            selected = self.function(self.cloned_db)
+                            # selected = self.function(self.cloned_db)
+                            selected = self.function(edb)
                         else:
                             properties = self.search_entity_by_relation(relation_class=[Sends], entity_class=[Property])
                             for p in properties:
@@ -1156,6 +1163,7 @@ class DynamicEntity(Entity):
                         selected = random.choice(flows)
                         Process.store_event(self, 'selects ' + selected.end.name)
                         selected.sent = True
+
                     if isinstance(self, Or): # Select at least one process
                         or_flows = or_selector(flows)
                         selected = random.choice(or_flows)
@@ -1166,10 +1174,13 @@ class DynamicEntity(Entity):
                     elif isinstance(self, Condition):
                         if self.function is not None:
                             # Perform a function script for selection
-                            selected = self.function(self.cloned_db)
+                            selected = self.function(edb)
+                            # selected = self.function(self.cloned_db)
+
                             # Because 'selected' is the original process in db and r.end is a copied process,
                             # self.cloned_db.is_same() is used to check their same identity.
-                            selected_flows = [r for r in flows if self.cloned_db.is_same(r.end, selected)]
+                            # selected_flows = [r for r in flows if self.cloned_db.is_same(r.end, selected)]
+                            selected_flows = [r for r in flows if edb.is_same(r.end, selected)]
                             Process.store_event(self, 'selects ' + ', '.join([r.end.name for r in selected_flows]))
                             for r in selected_flows:
                                 r.sent = True
@@ -1210,7 +1221,8 @@ class DynamicEntity(Entity):
                     proc = self.get_pairs()
 
                     if proc.function is not None:
-                        selected = proc.function(self.cloned_db)
+                        # selected = proc.function(self.cloned_db)
+                        selected = proc.function(edb)
                     else:
                         # Search properties of this process
                         list_properties, _ = proc.search(words_search=[Property], depth=1)
@@ -1548,7 +1560,9 @@ class Process(DynamicEntity):
         #     actions, _ = self.search(words_search=[Action])
         path = os.path.splitext(traceback.extract_stack()[-2][0])[0]
 
-        actions = self.cloned_db.get(Action, path=path)
+        actions = edb.get(Action, path=path)
+        # actions = self.cloned_db.get(Action, path=path)
+
         dict_action = {x.name:x.total_time for x in actions}
         return dict_action
 
@@ -1693,7 +1707,7 @@ class Process(DynamicEntity):
             new_proc = self.init_sim_network()
 
             # print out control flows of UC
-            # self.print_flows(self.sim_network)
+            new_proc.print_flows(new_proc.sim_network)
 
             # check whether a web distributor exist or not
             # The web distributor is a web server sending simulation events to the connected clients
@@ -1793,6 +1807,9 @@ class Process(DynamicEntity):
 
         ret = []
         if args is not None and len(args) > 0:
+
+            ret.append(obj)
+
             for proc in args:
                 ret.append(obj.Process(proc))
             return tuple(ret)

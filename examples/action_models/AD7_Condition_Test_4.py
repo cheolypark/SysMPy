@@ -43,18 +43,17 @@ print('AD7_Condition_Test_4')
 
 ###############################################
 # 1 Define a model
-p = Process("process")
-p.Action("Act")
+p = Process("myProc1")
 
-p_con = p.Condition("Condition 1")
+p_con = p.Condition("myCondition1")
 
-p1 = p_con.Process("process 1")
-p2 = p_con.Process("process 2")
-p_act1 = p1.Action("Action 1")
-p_act2 = p2.Action("Action 2")
+p1 = p_con.Process("p1")
+p2 = p_con.Process("p2")
+p_act1 = p1.Action("p1_action")
+p_act2 = p2.Action("p2_action")
 p_end = p1.End()
 
-p_act3 = p.Action("Action 3")
+# p_act3 = p.Action("Action 3")
 
 ###############################################
 # 2 Run a simulation
